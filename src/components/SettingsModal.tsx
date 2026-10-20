@@ -148,22 +148,57 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Seal Size */}
             {settings.showSeal && (
-              <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
-                <div className="flex justify-between text-xs font-semibold text-slate-700">
-                  <span>ขนาดตราสัญลักษณ์</span>
-                  <span>{settings.sealSize} px</span>
+              <>
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                  <div className="flex justify-between text-xs font-semibold text-slate-700">
+                    <span>ขนาดตราสัญลักษณ์</span>
+                    <span>{settings.sealSize} px</span>
+                  </div>
+                  <input
+                    type="range"
+                    min="60"
+                    max="140"
+                    value={settings.sealSize}
+                    onChange={(e) =>
+                      onUpdateSettings({ ...settings, sealSize: parseInt(e.target.value, 10) })
+                    }
+                    className="w-full accent-blue-600"
+                  />
                 </div>
-                <input
-                  type="range"
-                  min="60"
-                  max="140"
-                  value={settings.sealSize}
-                  onChange={(e) =>
-                    onUpdateSettings({ ...settings, sealSize: parseInt(e.target.value, 10) })
-                  }
-                  className="w-full accent-blue-600"
-                />
-              </div>
+
+                {/* Active Seal Preview */}
+                <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-lg bg-white border border-slate-200 p-1 flex items-center justify-center shrink-0 shadow-2xs">
+                      <img
+                        src={settings.customSealUrl || '/assets/lopburi-seal.jpg'}
+                        alt="ตราสัญลักษณ์ประจำจังหวัดลพบุรี"
+                        className="w-full h-full object-contain"
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs font-semibold text-slate-800">
+                        ตราประจำจังหวัดลพบุรี (รูปทางการ)
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        พระบรมราชานุสาวรีย์สมเด็จพระนารายณ์มหาราช สถิตหน้าพระปรางค์สามยอด
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onUpdateSettings({
+                        ...settings,
+                        customSealUrl: '/assets/lopburi-seal.jpg',
+                      });
+                    }}
+                    className="px-2.5 py-1.5 text-xs font-medium text-blue-700 bg-white hover:bg-blue-50 border border-slate-200 rounded-lg shadow-2xs transition-colors shrink-0"
+                  >
+                    ใช้ตราทางการ
+                  </button>
+                </div>
+              </>
             )}
           </div>
 

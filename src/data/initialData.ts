@@ -215,7 +215,8 @@ export const INITIAL_SETTINGS: DocumentSettings = {
   useThaiNumerals: true,
   fontSize: 'md',
   showSeal: true,
-  sealSize: 88,
+  sealSize: 92,
+  customSealUrl: '/assets/lopburi-seal.jpg',
   provinceName: 'จังหวัดลพบุรี',
   adminPasscode: '1567',
 };

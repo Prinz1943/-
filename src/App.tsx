@@ -72,7 +72,14 @@ export default function App() {
   const [settings, setSettings] = useState<DocumentSettings>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
-      return saved ? JSON.parse(saved) : INITIAL_SETTINGS;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (!parsed.customSealUrl || parsed.customSealUrl === '') {
+          parsed.customSealUrl = '/assets/lopburi-seal.jpg';
+        }
+        return parsed;
+      }
+      return INITIAL_SETTINGS;
     } catch {
       return INITIAL_SETTINGS;
     }
