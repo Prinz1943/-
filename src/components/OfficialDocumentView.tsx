@@ -1,0 +1,468 @@
+import React from 'react';
+import { Executive, ScheduleItem, DocumentSettings, CategoryType } from '../types/schedule';
+import { LopburiEmblem } from './LopburiEmblem';
+import { formatThaiDateTitle, formatTimeDisplay } from '../utils/thaiDate';
+import { Edit2, Plus, Trash2, Printer, Copy, Check, FileDown, Eye, UserPlus, Loader2, Lock } from 'lucide-react';
+import { exportDocumentToPdf } from '../utils/pdfGenerator';
+
+interface OfficialDocumentViewProps {
+  category: CategoryType | 'all';
+  date: string;
+  executives: Executive[];
+  schedules: ScheduleItem[];
+  settings: DocumentSettings;
+  isAdmin: boolean;
+  onPromptLogin: () => void;
+  onEditSchedule: (item: ScheduleItem) => void;
+  onDeleteSchedule: (id: string) => void;
+  onAddSchedule: (prefill?: Partial<ScheduleItem>) => void;
+  onEditExecutive: (exec: Executive) => void;
+  onDeleteExecutive: (id: string) => void;
+  onAddExecutive: (category: CategoryType) => void;
+}
+
+export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
+  category,
+  date,
+  executives,
+  schedules,
+  settings,
+  isAdmin,
+  onPromptLogin,
+  onEditSchedule,
+  onDeleteSchedule,
+  onAddSchedule,
+  onEditExecutive,
+  onDeleteExecutive,
+  onAddExecutive,
+}) => {
+  const [copied, setCopied] = React.useState(false);
+  const [isExportingPdf, setIsExportingPdf] = React.useState(false);
+
+  // Determine which sections to render
+  const sectionsToRender: { id: CategoryType; title: string }[] = [];
+  if (category === 'all' || category === 'high_executives') {
+    sectionsToRender.push({
+      id: 'high_executives',
+      title: 'วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี',
+    });
+  }
+  if (category === 'all' || category === 'provincial_office') {
+    sectionsToRender.push({
+      id: 'provincial_office',
+      title: 'วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี',
+    });
+  }
+
+  const handleDownloadPdf = async () => {
+    const ids = sectionsToRender.map((s) => `document-sheet-${s.id}`);
+    const catName = category === 'provincial_office' ? 'สำนักงานจังหวัด' : (category === 'all' ? 'รวมทั้งหมด' : 'ผู้บริหารระดับสูง');
+    const fileName = `วาระงาน${catName}_จังหวัดลพบุรี_${date}.pdf`;
+    await exportDocumentToPdf(ids, fileName, setIsExportingPdf);
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleCopyText = (targetCategory: CategoryType, title: string) => {
+    const formattedDate = formatThaiDateTitle(date, settings.useThaiNumerals);
+    const catExecs = executives
+      .filter((e) => e.category === targetCategory)
+      .sort((a, b) => a.order - b.order);
+
+    let text = `📋 ${title}\n📅 ${formattedDate}\n------------------------\n`;
+
+    catExecs.forEach((exec) => {
+      const items = schedules
+        .filter((s) => s.category === targetCategory && s.executiveId === exec.id && s.date === date)
+        .sort((a, b) => a.time.localeCompare(b.time));
+
+      if (items.length > 0) {
+        text += `\n👤 ${exec.name} (${exec.position})\n`;
+        items.forEach((item, idx) => {
+          text += `  ${idx + 1}. เวลา: ${item.time}\n`;
+          text += `     วาระงาน: ${item.agenda}\n`;
+          text += `     สถานที่: ${item.location}\n`;
+          text += `     การแต่งกาย: ${item.dressCode}\n`;
+          text += `     หน่วยงาน: ${item.department}\n`;
+        });
+      }
+    });
+
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const formattedDate = formatThaiDateTitle(date, settings.useThaiNumerals);
+
+  return (
+    <div className="space-y-12">
+      {/* Top Action Toolbar (hidden on print) */}
+      <div className="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+            <Eye className="w-3.5 h-3.5" />
+            โหมดเอกสารราชการทางการ (Official Print View)
+          </span>
+          {isAdmin ? (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              สถานะ: เจ้าหน้าที่ (แก้ไขได้)
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+              โหมดบุคคลทั่วไป (ดูได้อย่างเดียว)
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-2 flex-wrap">
+          {isAdmin ? (
+            <button
+              onClick={() => onAddSchedule()}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              เพิ่มวาระงานใหม่
+            </button>
+          ) : (
+            <button
+              onClick={onPromptLogin}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+            >
+              เข้าสู่ระบบเพื่อแก้ไข
+            </button>
+          )}
+
+          <button
+            onClick={() => handleCopyText(
+              category === 'provincial_office' ? 'provincial_office' : 'high_executives',
+              category === 'provincial_office'
+                ? 'วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี'
+                : 'วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี'
+            )}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-300 cursor-pointer"
+            title="คัดลอกข้อความสรุปสำหรับส่ง LINE หรือบันทึกข้อความ"
+          >
+            {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+            {copied ? 'คัดลอกแล้ว' : 'คัดลอกส่ง LINE'}
+          </button>
+
+          {/* Download PDF button */}
+          <button
+            onClick={handleDownloadPdf}
+            disabled={isExportingPdf}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-rose-700 hover:bg-rose-800 active:scale-95 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            title="ดาวน์โหลดและบันทึกไฟล์เป็น PDF โดยตรง"
+          >
+            {isExportingPdf ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <FileDown className="w-3.5 h-3.5" />
+            )}
+            <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'บันทึกทำเป็น PDF'}</span>
+          </button>
+
+          {/* Print button */}
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-sm cursor-pointer"
+            title="เปิดหน้าต่างพิมพ์ของเบราว์เซอร์"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            พิมพ์เอกสาร
+          </button>
+        </div>
+      </div>
+
+      {/* Render Document Sheets */}
+      {sectionsToRender.map((section, sectionIdx) => {
+        const catExecs = executives
+          .filter((e) => e.category === section.id)
+          .sort((a, b) => a.order - b.order);
+
+        // Group schedules for each executive
+        const execRowsData = catExecs.map((exec) => {
+          const items = schedules
+            .filter((s) => s.category === section.id && s.executiveId === exec.id && s.date === date)
+            .sort((a, b) => a.time.localeCompare(b.time));
+          return { exec, items };
+        });
+
+        const hasAnySchedule = execRowsData.some((g) => g.items.length > 0);
+
+        return (
+          <div
+            key={section.id}
+            id={`document-sheet-${section.id}`}
+            className={`official-document-sheet bg-white p-8 md:p-12 shadow-md rounded-lg border border-slate-300 mx-auto max-w-6xl font-sarabun text-black ${
+              sectionIdx > 0 ? 'page-break-before print:mt-8' : ''
+            }`}
+            style={{ minHeight: '600px' }}
+          >
+            {/* Header: Seal Emblem */}
+            {settings.showSeal && (
+              <div className="mb-3 text-center">
+                <LopburiEmblem
+                  size={settings.sealSize || 84}
+                  customUrl={settings.customSealUrl}
+                />
+              </div>
+            )}
+
+            {/* Document Title & Date */}
+            <div className="text-center mb-6 space-y-1">
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-black">
+                {section.title}
+              </h1>
+              <p className="text-lg md:text-xl font-bold text-black">
+                {formattedDate}
+              </p>
+            </div>
+
+            {/* Official Table Matching Images */}
+            <div className="overflow-x-auto">
+              <table className="official-table w-full border-collapse border-2 border-black text-[13.5px] leading-snug">
+                <thead>
+                  <tr className="bg-slate-50 print:bg-transparent">
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[18%] align-middle">
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span>ผู้บริหาร</span>
+                        {isAdmin && (
+                          <button
+                            onClick={() => onAddExecutive(section.id)}
+                            className="no-print p-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 text-[11px] font-normal inline-flex items-center gap-0.5 transition-colors"
+                            title="เพิ่มผู้บริหารใหม่ในตารางนี้"
+                          >
+                            <UserPlus className="w-3 h-3" />
+                            <span className="hidden sm:inline">เพิ่ม</span>
+                          </button>
+                        )}
+                      </div>
+                    </th>
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[9%] align-middle">
+                      เวลา
+                    </th>
+                    <th className="border-2 border-black px-3 py-2.5 font-bold text-center w-[36%] align-middle">
+                      วาระงาน
+                    </th>
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[17%] align-middle">
+                      สถานที่
+                    </th>
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] align-middle">
+                      การแต่งกาย
+                    </th>
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] align-middle">
+                      หน่วยงาน
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {execRowsData.map(({ exec, items }) => {
+                    if (items.length === 0) {
+                      // Executive has no item today
+                      return (
+                        <tr key={`empty-${exec.id}`} className="hover:bg-slate-50/50">
+                          {/* Executive column */}
+                          <td className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white">
+                            <div className="font-semibold text-black text-[13.5px]">{exec.name}</div>
+                            <div className="text-slate-800 text-[12px] leading-tight mt-0.5">{exec.position}</div>
+                            {isAdmin && (
+                              <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
+                                <button
+                                  onClick={() => onEditExecutive(exec)}
+                                  title="แก้ไขชื่อหรือตำแหน่งผู้บริหารท่านนี้"
+                                  className="text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-sans inline-flex items-center gap-0.5 transition-colors"
+                                >
+                                  <Edit2 className="w-2.5 h-2.5" /> แก้ไข
+                                </button>
+                                <button
+                                  onClick={() => onAddSchedule({
+                                    executiveId: exec.id,
+                                    category: section.id,
+                                    date,
+                                  })}
+                                  title="เพิ่มวาระงานให้ผู้บริหารท่านนี้"
+                                  className="text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200 font-sans inline-flex items-center gap-0.5 transition-colors"
+                                >
+                                  <Plus className="w-2.5 h-2.5" /> วาระ
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteExecutive(exec.id);
+                                  }}
+                                  title="ลบผู้บริหารท่านนี้ออกจากตาราง"
+                                  className="text-[11px] text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 px-1.5 py-0.5 rounded border border-rose-200 font-sans inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                                >
+                                  <Trash2 className="w-2.5 h-2.5" /> ลบ
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-3 py-3 text-center text-slate-400 font-sarabun italic">
+                            - ไม่มีวาระงาน -
+                            {isAdmin && (
+                              <div className="no-print mt-1">
+                                <button
+                                  onClick={() => onAddSchedule({
+                                    executiveId: exec.id,
+                                    category: section.id,
+                                    date,
+                                  })}
+                                  className="text-xs text-blue-600 hover:underline font-sans not-italic inline-flex items-center gap-1"
+                                >
+                                  <Plus className="w-3 h-3" /> เพิ่มวาระงาน
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
+                        </tr>
+                      );
+                    }
+
+                    // Executive has 1 or more items: use rowspan for first item
+                    return items.map((item, idx) => {
+                      const isFirstRow = idx === 0;
+                      return (
+                        <tr key={item.id} className="hover:bg-amber-50/20 transition-colors group">
+                          {/* Executive cell (spans items.length rows) */}
+                          {isFirstRow && (
+                            <td
+                              rowSpan={items.length}
+                              className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white"
+                            >
+                              <div className="font-semibold text-black text-[13.5px]">{exec.name}</div>
+                              <div className="text-slate-900 text-[12px] leading-tight mt-0.5">{exec.position}</div>
+                              {isAdmin && (
+                                <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
+                                  <button
+                                    onClick={() => onEditExecutive(exec)}
+                                    title="แก้ไขชื่อหรือตำแหน่งผู้บริหารท่านนี้"
+                                    className="text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 px-1.5 py-0.5 rounded border border-blue-200 font-sans inline-flex items-center gap-0.5 transition-colors"
+                                  >
+                                    <Edit2 className="w-2.5 h-2.5" /> แก้ไข
+                                  </button>
+                                  <button
+                                    onClick={() => onAddSchedule({
+                                      executiveId: exec.id,
+                                      category: section.id,
+                                      date,
+                                    })}
+                                    title="เพิ่มวาระงานให้ผู้บริหารท่านนี้"
+                                    className="text-[11px] text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-1.5 py-0.5 rounded border border-emerald-200 font-sans inline-flex items-center gap-0.5 transition-colors"
+                                  >
+                                    <Plus className="w-2.5 h-2.5" /> วาระ
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onDeleteExecutive(exec.id);
+                                    }}
+                                    title="ลบผู้บริหารท่านนี้ออกจากตาราง"
+                                    className="text-[11px] text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 px-1.5 py-0.5 rounded border border-rose-200 font-sans inline-flex items-center gap-0.5 transition-colors cursor-pointer"
+                                  >
+                                    <Trash2 className="w-2.5 h-2.5" /> ลบ
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          )}
+
+                          {/* Time */}
+                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun font-normal whitespace-nowrap">
+                            {formatTimeDisplay(item.time, settings.useThaiNumerals)}
+                          </td>
+
+                          {/* Agenda */}
+                          <td className="border-2 border-black px-3 py-3 align-top font-sarabun text-left leading-relaxed">
+                            <span>{item.agenda}</span>
+                            {/* Action buttons for editing/deleting */}
+                            {isAdmin ? (
+                              <div className="no-print mt-2 flex flex-wrap items-center gap-1.5 text-xs font-sans">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onEditSchedule(item);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-blue-700 bg-blue-50 hover:bg-blue-100 active:bg-blue-200 px-2 py-0.5 rounded-md border border-blue-200 font-medium transition-colors cursor-pointer shadow-2xs"
+                                  title="แก้ไขวาระงานนี้"
+                                >
+                                  <Edit2 className="w-3 h-3 text-blue-600" />
+                                  <span>แก้ไข</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    onDeleteSchedule(item.id);
+                                  }}
+                                  className="inline-flex items-center gap-1 text-rose-700 bg-rose-50 hover:bg-rose-100 active:bg-rose-200 px-2 py-0.5 rounded-md border border-rose-200 font-medium transition-colors cursor-pointer shadow-2xs"
+                                  title="ลบวาระงานนี้ออกจากตาราง"
+                                >
+                                  <Trash2 className="w-3 h-3 text-rose-600" />
+                                  <span>ลบ</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="no-print mt-1.5">
+                                <button
+                                  type="button"
+                                  onClick={onPromptLogin}
+                                  className="text-[11px] text-slate-400 hover:text-blue-600 inline-flex items-center gap-1 transition-colors cursor-pointer"
+                                  title="เข้าสู่ระบบเจ้าหน้าที่เพื่อแก้ไขหรือลบวาระงาน"
+                                >
+                                  <Lock className="w-2.5 h-2.5" />
+                                  <span>เข้าสู่ระบบเพื่อแก้ไข/ลบ</span>
+                                </button>
+                              </div>
+                            )}
+                          </td>
+
+                          {/* Location */}
+                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
+                            {item.location}
+                          </td>
+
+                          {/* Dress Code */}
+                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
+                            {item.dressCode}
+                          </td>
+
+                          {/* Department */}
+                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
+                            {item.department}
+                          </td>
+                        </tr>
+                      );
+                    });
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Note / Legend Footer if needed */}
+            {!hasAnySchedule && (
+              <div className="text-center py-6 text-slate-500 font-sarabun no-print">
+                ยังไม่มีข้อมูลวาระงานในวันดังกล่าว กด "เพิ่มวาระงานใหม่" เพื่อเริ่มต้นกรอกข้อมูล
+              </div>
+            )}
+
+            {/* Print Footer */}
+            <div className="print-only text-right text-xs text-black font-sarabun mt-4">
+              พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};

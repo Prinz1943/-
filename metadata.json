@@ -1,0 +1,7 @@
+{
+  "name": "ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี",
+  "description": "ระบบจัดการและจัดทำเอกสารวาระงานผู้บริหารระดับสูงและผู้บริหารสำนักงานจังหวัดลพบุรี ตามแบบฟอร์มทางราชการ",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
