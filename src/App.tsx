@@ -10,7 +10,13 @@ import {
   INITIAL_SCHEDULES,
   INITIAL_SETTINGS,
 } from './data/initialData';
-import { formatThaiDateTitle, getTodayString } from './utils/thaiDate';
+import {
+  formatThaiDateTitle,
+  getTodayString,
+  isToday,
+  formatLiveThaiClock,
+  getCurrentThaiTime,
+} from './utils/thaiDate';
 import { LopburiEmblem } from './components/LopburiEmblem';
 import { OfficialDocumentView } from './components/OfficialDocumentView';
 import { CardTimelineView } from './components/CardTimelineView';
@@ -41,6 +47,8 @@ import {
   ShieldCheck,
   FileDown,
   Loader2,
+  Clock,
+  Zap,
 } from 'lucide-react';
 
 const STORAGE_KEY_EXECS = 'lopburi_schedule_executives_v1';
@@ -50,6 +58,13 @@ const STORAGE_KEY_ADMIN_AUTH = 'lopburi_admin_auth_v1';
 
 
 export default function App() {
+  // Real-time live clock (updates every second)
+  const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   // Initialize state from localStorage or defaults
   const [executives, setExecutives] = useState<Executive[]>(() => {
     try {
@@ -63,7 +78,25 @@ export default function App() {
   const [schedules, setSchedules] = useState<ScheduleItem[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_SCHEDS);
-      return saved ? JSON.parse(saved) : INITIAL_SCHEDULES;
+      if (saved) {
+        const parsed: ScheduleItem[] = JSON.parse(saved);
+        const today = getTodayString();
+        const hasToday = parsed.some((s) => s.date === today);
+        // If saved schedules only contain past dates (like 2026-10-16) and none for today,
+        // clone the items to today's date so today is always populated
+        if (!hasToday && parsed.some((s) => s.date === '2026-10-16')) {
+          const todayClones: ScheduleItem[] = parsed
+            .filter((s) => s.date === '2026-10-16')
+            .map((s) => ({
+              ...s,
+              id: `today-${s.id}`,
+              date: today,
+            }));
+          return [...parsed, ...todayClones];
+        }
+        return parsed;
+      }
+      return INITIAL_SCHEDULES;
     } catch {
       return INITIAL_SCHEDULES;
     }
@@ -95,8 +128,8 @@ export default function App() {
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Selected date: default to '2026-10-16' (the date from the user's images)
-  const [selectedDate, setSelectedDate] = useState<string>('2026-10-16');
+  // Selected date: defaults to today's date (always current)
+  const [selectedDate, setSelectedDate] = useState<string>(() => getTodayString());
 
   // Category tab: 'high_executives' | 'provincial_office' | 'all'
   const [activeCategory, setActiveCategory] = useState<CategoryType | 'all'>('high_executives');
@@ -279,7 +312,7 @@ export default function App() {
         executiveId: prefill.executiveId || '',
         category: prefill.category || (activeCategory === 'all' ? 'high_executives' : activeCategory),
         date: prefill.date || selectedDate,
-        time: prefill.time || '09.30 น.',
+        time: prefill.time || getCurrentThaiTime(false, true),
         agenda: prefill.agenda || '',
         location: prefill.location || 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
         dressCode: prefill.dressCode || 'ชุดสุภาพไว้ทุกข์',
@@ -366,53 +399,74 @@ export default function App() {
     <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
       {/* Top Banner Navigation (Hidden on print) */}
       <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-3">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-14 sm:h-16 gap-2 sm:gap-3">
             {/* Brand Logo & Title */}
-            <div className="flex items-center gap-3">
-              <div className="cursor-pointer" onClick={() => setSelectedDate('2026-10-16')} title="คลิกเพื่อกลับสู่วันที่ตามตัวอย่าง">
-                <LopburiEmblem size={44} customUrl={settings.customSealUrl} />
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="cursor-pointer shrink-0" onClick={() => setSelectedDate(getTodayString())} title="คลิกเพื่อกลับสู่วันและเวลาปัจจุบัน">
+                <LopburiEmblem size={38} customUrl={settings.customSealUrl} />
               </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-                    ระบบตารางวาระงานผู้บริหาร
+              <div className="min-w-0">
+                <div className="flex items-center gap-1.5">
+                  <h1 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight truncate sm:whitespace-normal">
+                    วาระงานผู้บริหาร
                   </h1>
-                  <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200">
-                    จังหวัดลพบุรี
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
+                    ลพบุรี
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 hidden sm:block">
+                <p className="text-[11px] text-slate-500 hidden sm:block truncate">
                   สำนักงานจังหวัดลพบุรี
                 </p>
               </div>
             </div>
 
+            {/* Real-time Live Clock (Desktop) */}
+            <div
+              onClick={() => setSelectedDate(getTodayString())}
+              title="เวลาปัจจุบันขณะนี้ (คลิกเพื่อแสดงวาระงานวันนี้)"
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50/50 border border-slate-200 hover:border-blue-200 text-xs cursor-pointer transition-colors shadow-2xs group shrink-0"
+            >
+              <div className="flex items-center gap-1.5">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-500 group-hover:text-blue-900">เวลาปัจจุบัน:</span>
+              </div>
+              <div className="flex items-center gap-1 font-mono font-bold text-slate-800 group-hover:text-blue-700">
+                <Clock className="w-3.5 h-3.5 text-blue-600" />
+                <span>{formatLiveThaiClock(currentTime, settings.useThaiNumerals, true)}</span>
+              </div>
+            </div>
+
             {/* View Mode Toggle and Main Action Buttons */}
-            <div className="flex items-center gap-2">
-              {/* Switch View Mode */}
-              <div className="hidden sm:inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1 text-xs">
+            <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+              {/* Switch View Mode: Accessible on all devices */}
+              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-100 p-0.5 text-xs shrink-0">
                 <button
                   onClick={() => setViewMode('document')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-all ${
+                  className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md font-medium transition-all ${
                     viewMode === 'document'
                       ? 'bg-white text-blue-700 shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
+                  title="แบบฟอร์มทางการ (A4 แนวนอน)"
                 >
                   <FileText className="w-3.5 h-3.5" />
-                  แบบฟอร์มทางการ
+                  <span className="hidden xs:inline sm:inline">ตาราง</span>
                 </button>
                 <button
                   onClick={() => setViewMode('cards')}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md font-medium transition-all ${
+                  className={`inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 rounded-md font-medium transition-all ${
                     viewMode === 'cards'
                       ? 'bg-white text-blue-700 shadow-xs font-semibold'
                       : 'text-slate-600 hover:text-slate-900'
                   }`}
+                  title="ไทม์ไลน์การ์ด (อ่านง่ายบนมือถือ)"
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
-                  ไทม์ไลน์การ์ด
+                  <span className="hidden xs:inline sm:inline">การ์ด</span>
                 </button>
               </div>
 
@@ -425,9 +479,9 @@ export default function App() {
                   }))
                 }
                 title="สลับการแสดงผลเลขไทย (๑ ๒ ๓) และเลขอารบิก (1 2 3)"
-                className="px-2.5 py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs"
+                className="px-2 sm:px-2.5 py-1 sm:py-1.5 text-xs font-bold rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 transition-colors shadow-2xs shrink-0"
               >
-                {settings.useThaiNumerals ? 'เลขไทย ๑๒๓' : 'เลขอารบิก 123'}
+                {settings.useThaiNumerals ? '๑๒๓' : '123'}
               </button>
 
               {/* Save as PDF direct button */}
@@ -435,23 +489,23 @@ export default function App() {
                 onClick={handleExportPdf}
                 disabled={isExportingPdf}
                 title="บันทึกทำเป็นไฟล์ PDF (A4 แนวนอน)"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white transition-all shadow-2xs cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg bg-rose-600 hover:bg-rose-700 active:scale-95 text-white transition-all shadow-2xs cursor-pointer disabled:opacity-50 shrink-0"
               >
                 {isExportingPdf ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <FileDown className="w-3.5 h-3.5" />
                 )}
-                <span>{isExportingPdf ? 'สร้าง PDF...' : 'บันทึก PDF'}</span>
+                <span className="hidden sm:inline">{isExportingPdf ? 'สร้าง PDF...' : 'บันทึก PDF'}</span>
               </button>
 
               {/* Share LINE */}
               <button
                 onClick={() => setIsShareModalOpen(true)}
                 title="คัดลอกข้อความสรุปสำหรับส่ง LINE"
-                className="p-2 text-slate-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 rounded-lg border border-slate-200 transition-colors"
+                className="p-1.5 sm:p-2 text-slate-700 bg-white hover:bg-emerald-50 hover:text-emerald-700 rounded-lg border border-slate-200 transition-colors shrink-0"
               >
-                <Share2 className="w-4 h-4" />
+                <Share2 className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
               </button>
 
               {/* Admin Actions vs Public Login */}
@@ -459,52 +513,54 @@ export default function App() {
                 <>
                   <div className="hidden lg:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                    เจ้าหน้าที่ (Admin)
+                    เจ้าหน้าที่
                   </div>
 
                   {/* Add Schedule Button */}
                   <button
                     onClick={() => handleOpenAddSchedule()}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-colors"
+                    className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm transition-colors shrink-0"
+                    title="เพิ่มวาระงาน"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span className="hidden md:inline">เพิ่มวาระงาน</span>
+                    <span className="hidden md:inline">เพิ่มวาระ</span>
                   </button>
 
                   {/* Manage Executives */}
                   <button
                     onClick={() => setIsExecModalOpen(true)}
                     title="จัดการทำเนียบผู้บริหาร"
-                    className="p-2 text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                    className="p-1.5 sm:p-2 text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shrink-0"
                   >
-                    <Users className="w-4 h-4" />
+                    <Users className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </button>
 
                   {/* Settings */}
                   <button
                     onClick={() => setIsSettingsModalOpen(true)}
                     title="ตั้งค่าระบบและรหัสผ่าน"
-                    className="p-2 text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors"
+                    className="p-1.5 sm:p-2 text-slate-700 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 transition-colors shrink-0"
                   >
-                    <Settings className="w-4 h-4" />
+                    <Settings className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </button>
 
                   {/* Logout */}
                   <button
                     onClick={handleLogout}
                     title="ออกจากระบบเจ้าหน้าที่"
-                    className="p-2 text-rose-600 bg-white hover:bg-rose-50 rounded-lg border border-rose-200 transition-colors"
+                    className="p-1.5 sm:p-2 text-rose-600 bg-white hover:bg-rose-50 rounded-lg border border-rose-200 transition-colors shrink-0"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 sm:w-4 h-3.5 sm:h-4" />
                   </button>
                 </>
               ) : (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-blue-800 text-white hover:bg-blue-900 shadow-sm transition-colors"
+                  className="inline-flex items-center gap-1 px-2 sm:px-3 py-1 sm:py-1.5 text-xs font-semibold rounded-lg bg-blue-800 text-white hover:bg-blue-900 shadow-sm transition-colors shrink-0"
+                  title="เข้าสู่ระบบเจ้าหน้าที่ (สำหรับแก้ไขวาระ)"
                 >
                   <Lock className="w-3.5 h-3.5 text-amber-300" />
-                  <span>เข้าสู่ระบบเจ้าหน้าที่</span>
+                  <span className="hidden sm:inline">เจ้าหน้าที่</span>
                 </button>
               )}
             </div>
@@ -513,12 +569,12 @@ export default function App() {
 
         {/* Sub-bar: Category Tabs & Date Navigator */}
         <div className="bg-slate-50 border-t border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-col md:flex-row md:items-center justify-between gap-3">
-            {/* Category Switcher Tabs */}
-            <div className="flex flex-wrap items-center gap-1.5">
+          <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+            {/* Category Switcher Tabs: horizontal smooth scroll without wrap on mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-0.5 -mx-3 px-3 sm:mx-0 sm:px-0">
               <button
                 onClick={() => setActiveCategory('high_executives')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
                   activeCategory === 'high_executives'
                     ? 'bg-blue-800 text-white shadow-xs'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -528,7 +584,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveCategory('provincial_office')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
                   activeCategory === 'provincial_office'
                     ? 'bg-blue-800 text-white shadow-xs'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -538,7 +594,7 @@ export default function App() {
               </button>
               <button
                 onClick={() => setActiveCategory('all')}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all shrink-0 ${
                   activeCategory === 'all'
                     ? 'bg-blue-800 text-white shadow-xs'
                     : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
@@ -548,9 +604,9 @@ export default function App() {
               </button>
             </div>
 
-            {/* Date Navigator & Picker */}
-            <div className="flex items-center gap-2">
-              <div className="flex items-center bg-white rounded-lg border border-slate-200 p-0.5 shadow-2xs">
+            {/* Date Navigator & Picker: horizontal smooth scroll on mobile */}
+            <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-0.5 -mx-3 px-3 sm:mx-0 sm:px-0">
+              <div className="flex items-center bg-white rounded-lg border border-slate-200 p-0.5 shadow-2xs shrink-0">
                 <button
                   onClick={() => handleStepDate('prev')}
                   className="p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-md transition-colors"
@@ -559,13 +615,13 @@ export default function App() {
                   <ChevronLeft className="w-4 h-4" />
                 </button>
 
-                <div className="flex items-center px-2 gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-blue-600" />
+                <div className="flex items-center px-1.5 sm:px-2 gap-1">
+                  <Calendar className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <input
                     type="date"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
-                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer"
+                    className="text-xs font-semibold text-slate-800 bg-transparent focus:outline-none cursor-pointer w-[115px] sm:w-auto"
                   />
                 </div>
 
@@ -578,27 +634,55 @@ export default function App() {
                 </button>
               </div>
 
-              {/* Quick Preset Buttons */}
-              <button
-                onClick={() => setSelectedDate(getTodayString())}
-                className="px-2.5 py-1.5 text-xs font-medium bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 rounded-lg transition-colors shadow-2xs"
-              >
-                วันนี้
-              </button>
+              {/* Today / Current Preset Button */}
+              {isToday(selectedDate) ? (
+                <button
+                  onClick={() => setSelectedDate(getTodayString())}
+                  className="px-2.5 sm:px-3 py-1.5 text-xs font-semibold bg-emerald-600 text-white rounded-lg shadow-2xs flex items-center gap-1.5 shrink-0"
+                  title="กำลังแสดงผลตามวันและเวลาปัจจุบัน"
+                >
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                  </span>
+                  <span>วันนี้ (ปัจจุบัน)</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setSelectedDate(getTodayString())}
+                  className="px-2.5 sm:px-3 py-1.5 text-xs font-bold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg shadow-2xs flex items-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                  title="คลิกเพื่อกลับมาแสดงผลวันและเวลาปัจจุบัน"
+                >
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  <span>กลับสู่วันนี้</span>
+                </button>
+              )}
+
+              {/* Sample Date Button */}
               <button
                 onClick={() => setSelectedDate('2026-10-16')}
                 title="เปิดดูข้อมูลตัวอย่างตามรูปภาพผู้ใช้ วันที่ 16 ต.ค. 2569"
-                className="px-2.5 py-1.5 text-xs font-medium bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-lg transition-colors shadow-2xs"
+                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-2xs shrink-0 ${
+                  selectedDate === '2026-10-16'
+                    ? 'bg-blue-800 text-white font-semibold'
+                    : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-600'
+                }`}
               >
-                ๑๖ ต.ค. ๒๕๖๙ (ตามภาพ)
+                ๑๖ ต.ค. (ตัวอย่าง)
               </button>
+
+              {/* Mobile live time indicator */}
+              <div className="lg:hidden flex items-center gap-1 text-[11px] font-mono text-slate-600 bg-white px-2 py-1 rounded-lg border border-slate-200 shrink-0 shadow-2xs">
+                <Clock className="w-3 h-3 text-blue-600" />
+                <span>{formatLiveThaiClock(currentTime, settings.useThaiNumerals, false)}</span>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-2 sm:px-6 lg:px-8 py-4 sm:py-6 pb-24 sm:pb-8">
         <div className={viewMode === 'document' ? 'block' : 'hidden print:block'}>
           <OfficialDocumentView
             category={activeCategory}
@@ -614,6 +698,7 @@ export default function App() {
             onEditExecutive={handleOpenEditExecutive}
             onDeleteExecutive={handleDeleteExecutive}
             onAddExecutive={handleOpenAddExecutive}
+            onSwitchView={(mode) => setViewMode(mode)}
           />
         </div>
         {viewMode === 'cards' && (
@@ -636,8 +721,8 @@ export default function App() {
         )}
       </main>
 
-      {/* Floating Action Buttons: Save as PDF & Print */}
-      <aside className="no-print fixed bottom-6 right-6 z-50 flex flex-col sm:flex-row items-end sm:items-center gap-3">
+      {/* Desktop Floating Action Buttons (Hidden on mobile so it doesn't block content) */}
+      <aside className="no-print hidden sm:flex fixed bottom-6 right-6 z-50 flex-row items-center gap-3">
         {/* Floating 'Save as PDF' Action Button */}
         <button
           onClick={handleExportPdf}
@@ -654,7 +739,7 @@ export default function App() {
           <span className="font-semibold tracking-wide">
             {isExportingPdf ? 'กำลังสร้าง PDF...' : 'บันทึกทำเป็น PDF'}
           </span>
-          <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-normal hidden sm:inline-block">
+          <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-normal">
             .pdf
           </span>
         </button>
@@ -668,11 +753,75 @@ export default function App() {
         >
           <Printer className="w-5 h-5 text-amber-300 transition-transform group-hover:-translate-y-0.5" />
           <span className="font-semibold tracking-wide">พิมพ์เอกสาร (Print)</span>
-          <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-normal hidden sm:inline-block">
+          <span className="text-[11px] bg-white/20 text-white px-2 py-0.5 rounded-full font-normal">
             A4
           </span>
         </button>
       </aside>
+
+      {/* Mobile Bottom Dock (Sleek, compact, does not obscure document content) */}
+      <nav className="no-print sm:hidden fixed bottom-3 left-3 right-3 z-40 bg-white/95 backdrop-blur-md rounded-2xl shadow-xl border border-slate-200/90 px-3 py-2 flex items-center justify-around">
+        <button
+          onClick={() => setViewMode(viewMode === 'document' ? 'cards' : 'document')}
+          className={`flex flex-col items-center gap-0.5 text-[10px] font-medium transition-colors ${
+            viewMode === 'cards' ? 'text-blue-700 font-bold' : 'text-slate-600'
+          }`}
+        >
+          {viewMode === 'document' ? (
+            <LayoutGrid className="w-4 h-4 text-blue-600" />
+          ) : (
+            <FileText className="w-4 h-4 text-blue-600" />
+          )}
+          <span>{viewMode === 'document' ? 'ดูแบบการ์ด' : 'ดูแบบตาราง'}</span>
+        </button>
+
+        <button
+          onClick={handleExportPdf}
+          disabled={isExportingPdf}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-rose-700 cursor-pointer disabled:opacity-50"
+        >
+          {isExportingPdf ? (
+            <Loader2 className="w-4 h-4 animate-spin text-rose-600" />
+          ) : (
+            <FileDown className="w-4 h-4 text-rose-600" />
+          )}
+          <span>{isExportingPdf ? 'สร้าง PDF' : 'บันทึก PDF'}</span>
+        </button>
+
+        <button
+          onClick={() => setIsShareModalOpen(true)}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-emerald-700 cursor-pointer"
+        >
+          <Share2 className="w-4 h-4 text-emerald-600" />
+          <span>แชร์ LINE</span>
+        </button>
+
+        <button
+          onClick={handlePrint}
+          className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-indigo-700 cursor-pointer"
+        >
+          <Printer className="w-4 h-4 text-indigo-600" />
+          <span>พิมพ์เอกสาร</span>
+        </button>
+
+        {isAdmin ? (
+          <button
+            onClick={() => handleOpenAddSchedule()}
+            className="flex flex-col items-center gap-0.5 text-[10px] font-bold text-emerald-700 cursor-pointer"
+          >
+            <Plus className="w-4 h-4 text-emerald-600" />
+            <span>เพิ่มวาระ</span>
+          </button>
+        ) : (
+          <button
+            onClick={() => setIsLoginModalOpen(true)}
+            className="flex flex-col items-center gap-0.5 text-[10px] font-medium text-blue-900 cursor-pointer"
+          >
+            <Lock className="w-4 h-4 text-amber-500" />
+            <span>เจ้าหน้าที่</span>
+          </button>
+        )}
+      </nav>
 
       {/* Modals */}
       <ScheduleModal

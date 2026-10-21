@@ -1,8 +1,8 @@
 import React from 'react';
 import { Executive, ScheduleItem, DocumentSettings, CategoryType } from '../types/schedule';
 import { LopburiEmblem } from './LopburiEmblem';
-import { formatThaiDateTitle, formatTimeDisplay } from '../utils/thaiDate';
-import { Edit2, Plus, Trash2, Printer, Copy, Check, FileDown, Eye, UserPlus, Loader2, Lock } from 'lucide-react';
+import { formatThaiDateTitle, formatTimeDisplay, isToday } from '../utils/thaiDate';
+import { Edit2, Plus, Trash2, Printer, Copy, Check, FileDown, Eye, UserPlus, Loader2, Lock, LayoutGrid } from 'lucide-react';
 import { exportDocumentToPdf } from '../utils/pdfGenerator';
 
 interface OfficialDocumentViewProps {
@@ -19,6 +19,7 @@ interface OfficialDocumentViewProps {
   onEditExecutive: (exec: Executive) => void;
   onDeleteExecutive: (id: string) => void;
   onAddExecutive: (category: CategoryType) => void;
+  onSwitchView?: (view: 'document' | 'cards') => void;
 }
 
 export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
@@ -35,6 +36,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
   onEditExecutive,
   onDeleteExecutive,
   onAddExecutive,
+  onSwitchView,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [isExportingPdf, setIsExportingPdf] = React.useState(false);
@@ -98,40 +100,51 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
   const formattedDate = formatThaiDateTitle(date, settings.useThaiNumerals);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       {/* Top Action Toolbar (hidden on print) */}
-      <div className="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-4 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-            <Eye className="w-3.5 h-3.5" />
-            โหมดเอกสารราชการทางการ (Official Print View)
+      <div className="no-print bg-white rounded-xl shadow-sm border border-slate-200 p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+            <Eye className="w-3.5 h-3.5 shrink-0" />
+            <span>แบบฟอร์มทางการ (A4)</span>
           </span>
-          {isAdmin ? (
+          {isToday(date) ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
-              สถานะ: เจ้าหน้าที่ (แก้ไขได้)
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              วาระงานวันนี้ (ปัจจุบัน)
             </span>
           ) : (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
-              โหมดบุคคลทั่วไป (ดูได้อย่างเดียว)
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-800 border border-blue-200">
+              วันที่: {formatThaiDateTitle(date, settings.useThaiNumerals)}
+            </span>
+          )}
+          {isAdmin ? (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
+              สถานะ: เจ้าหน้าที่
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-600 border border-slate-200">
+              บุคคลทั่วไป (ดูเท่านั้น)
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           {isAdmin ? (
             <button
               onClick={() => onAddSchedule()}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-xs font-medium rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 transition-colors shadow-sm cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5" />
-              เพิ่มวาระงานใหม่
+              <span>เพิ่มวาระใหม่</span>
             </button>
           ) : (
             <button
               onClick={onPromptLogin}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-xs font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 transition-colors cursor-pointer"
             >
-              เข้าสู่ระบบเพื่อแก้ไข
+              <Lock className="w-3.5 h-3.5 text-amber-500" />
+              <span>เข้าสู่ระบบแก้ไข</span>
             </button>
           )}
 
@@ -142,18 +155,18 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                 ? 'วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี'
                 : 'วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี'
             )}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-300 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-xs font-medium rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors border border-slate-300 cursor-pointer"
             title="คัดลอกข้อความสรุปสำหรับส่ง LINE หรือบันทึกข้อความ"
           >
             {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-            {copied ? 'คัดลอกแล้ว' : 'คัดลอกส่ง LINE'}
+            <span>{copied ? 'คัดลอกแล้ว' : 'ส่ง LINE'}</span>
           </button>
 
           {/* Download PDF button */}
           <button
             onClick={handleDownloadPdf}
             disabled={isExportingPdf}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-rose-700 hover:bg-rose-800 active:scale-95 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-xs font-semibold rounded-lg bg-rose-700 hover:bg-rose-800 active:scale-95 text-white transition-all shadow-sm cursor-pointer disabled:opacity-50"
             title="ดาวน์โหลดและบันทึกไฟล์เป็น PDF โดยตรง"
           >
             {isExportingPdf ? (
@@ -161,19 +174,43 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
             ) : (
               <FileDown className="w-3.5 h-3.5" />
             )}
-            <span>{isExportingPdf ? 'กำลังสร้าง PDF...' : 'บันทึกทำเป็น PDF'}</span>
+            <span>{isExportingPdf ? 'กำลังสร้าง...' : 'บันทึก PDF'}</span>
           </button>
 
           {/* Print button */}
           <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-sm cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 sm:py-2 text-xs font-medium rounded-lg bg-blue-700 text-white hover:bg-blue-800 transition-colors shadow-sm cursor-pointer"
             title="เปิดหน้าต่างพิมพ์ของเบราว์เซอร์"
           >
             <Printer className="w-3.5 h-3.5" />
-            พิมพ์เอกสาร
+            <span>พิมพ์</span>
           </button>
         </div>
+      </div>
+
+      {/* Mobile Hint Banner for Table Scrolling or Switch to Card View */}
+      <div className="no-print sm:hidden -mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-2xs">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-lg shrink-0">📱</span>
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-blue-900 leading-tight">
+              ตารางกว้าง เลื่อนซ้าย-ขวาได้
+            </p>
+            <p className="text-[11px] text-blue-700 truncate">
+              หรือสลับเป็นมุมมองการ์ดเพื่ออ่านสบายตา
+            </p>
+          </div>
+        </div>
+        {onSwitchView && (
+          <button
+            onClick={() => onSwitchView('cards')}
+            className="shrink-0 inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-blue-600 active:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
+          >
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>ดูแบบการ์ด</span>
+          </button>
+        )}
       </div>
 
       {/* Render Document Sheets */}
@@ -196,7 +233,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
           <div
             key={section.id}
             id={`document-sheet-${section.id}`}
-            className={`official-document-sheet bg-white p-8 md:p-12 shadow-md rounded-lg border border-slate-300 mx-auto max-w-6xl font-sarabun text-black ${
+            className={`official-document-sheet bg-white p-3.5 sm:p-8 md:p-12 shadow-md rounded-lg border border-slate-300 mx-auto max-w-6xl font-sarabun text-black ${
               sectionIdx > 0 ? 'page-break-before print:mt-8' : ''
             }`}
             style={{ minHeight: '600px' }}
@@ -212,18 +249,18 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
             )}
 
             {/* Document Title & Date */}
-            <div className="text-center mb-6 space-y-1">
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight text-black">
+            <div className="text-center mb-5 sm:mb-6 space-y-1">
+              <h1 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight text-black leading-snug">
                 {section.title}
               </h1>
-              <p className="text-lg md:text-xl font-bold text-black">
+              <p className="text-base sm:text-lg md:text-xl font-bold text-black">
                 {formattedDate}
               </p>
             </div>
 
-            {/* Official Table Matching Images */}
-            <div className="overflow-x-auto">
-              <table className="official-table w-full border-collapse border-2 border-black text-[13.5px] leading-snug">
+            {/* Official Table Matching Images with smooth mobile horizontal scroll and min-width */}
+            <div className="overflow-x-auto -mx-1 sm:mx-0 pb-2 scrollbar-thin">
+              <table className="official-table min-w-[760px] w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug">
                 <thead>
                   <tr className="bg-slate-50 print:bg-transparent">
                     <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[18%] align-middle">

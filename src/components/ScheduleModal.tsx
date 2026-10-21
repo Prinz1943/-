@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ScheduleItem, Executive, CategoryType } from '../types/schedule';
 import { COMMON_DRESS_CODES, COMMON_LOCATIONS, COMMON_DEPARTMENTS } from '../data/initialData';
-import { X, Clock, MapPin, Shirt, Building2, UserCheck, Calendar, FileText, Trash2 } from 'lucide-react';
+import { getCurrentThaiTime, getCurrentExactThaiTime, getTodayString } from '../utils/thaiDate';
+import { X, Clock, MapPin, Shirt, Building2, UserCheck, Calendar, FileText, Trash2, Zap } from 'lucide-react';
 
 interface ScheduleModalProps {
   isOpen: boolean;
@@ -25,8 +26,8 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
   defaultCategory = 'high_executives',
 }) => {
   const [executiveId, setExecutiveId] = useState('');
-  const [date, setDate] = useState(defaultDate);
-  const [time, setTime] = useState('09.30 น.');
+  const [date, setDate] = useState(defaultDate || getTodayString());
+  const [time, setTime] = useState(() => getCurrentThaiTime(false, true));
   const [agenda, setAgenda] = useState('');
   const [location, setLocation] = useState('');
   const [dressCode, setDressCode] = useState('ชุดสุภาพ');
@@ -45,8 +46,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
       // Pick first executive matching default category
       const defaultExec = executives.find((e) => e.category === defaultCategory) || executives[0];
       setExecutiveId(defaultExec ? defaultExec.id : '');
-      setDate(defaultDate);
-      setTime('09.30 น.');
+      setDate(defaultDate || getTodayString());
+      // Suggest current time for new schedules
+      setTime(getCurrentThaiTime(false, true));
       setAgenda('');
       setLocation('ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี');
       setDressCode('ชุดสุภาพไว้ทุกข์');
@@ -75,7 +77,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     onClose();
   };
 
-  const quickTimes = ['08.30 น.', '09.00 น.', '09.30 น.', '10.00 น.', '13.00 น.', '13.30 น.', '15.00 น.', '16.00 น.'];
+  const exactNow = getCurrentExactThaiTime(false);
+  const quickTimes = [
+    '08.30 น.',
+    '09.00 น.',
+    '09.30 น.',
+    '10.00 น.',
+    '11.00 น.',
+    '13.00 น.',
+    '13.30 น.',
+    '14.00 น.',
+    '15.00 น.',
+    '16.00 น.',
+  ];
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
@@ -133,10 +147,20 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Calendar className="w-4 h-4 text-blue-600" />
-                วันที่ <span className="text-red-500">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Calendar className="w-4 h-4 text-blue-600" />
+                  วันที่ <span className="text-red-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setDate(getTodayString())}
+                  className="text-[11px] text-blue-700 hover:text-blue-900 hover:underline flex items-center gap-0.5"
+                >
+                  <Zap className="w-3 h-3 text-amber-500" />
+                  ใช้วันนี้ (ปัจจุบัน)
+                </button>
+              </div>
               <input
                 type="date"
                 value={date}
@@ -149,10 +173,21 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
           {/* Time & Quick chips */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <Clock className="w-4 h-4 text-blue-600" />
-              เวลา <span className="text-red-500">*</span> (เช่น ๐๙.๓๐ น. หรือ 09.30 น.)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-blue-600" />
+                เวลา <span className="text-red-500">*</span> (เช่น ๐๙.๓๐ น. หรือ 09.30 น.)
+              </label>
+              <button
+                type="button"
+                onClick={() => setTime(getCurrentExactThaiTime(false))}
+                className="text-[11px] font-medium text-emerald-700 hover:text-emerald-900 bg-emerald-50 hover:bg-emerald-100 px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 transition-colors"
+                title="ใส่เวลาปัจจุบันขณะนี้"
+              >
+                <Zap className="w-3 h-3 text-amber-500" />
+                ใช้เวลาปัจจุบัน ({exactNow})
+              </button>
+            </div>
             <input
               type="text"
               value={time}
@@ -163,6 +198,15 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             />
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
               <span className="text-[11px] text-slate-500 mr-1">เลือกเวลาด่วน:</span>
+              <button
+                type="button"
+                onClick={() => setTime(exactNow)}
+                className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-100 hover:bg-emerald-200 text-emerald-800 transition-colors border border-emerald-300 flex items-center gap-0.5"
+                title="ตั้งเวลาตามเวลาปัจจุบันขณะนี้"
+              >
+                <Zap className="w-3 h-3 text-amber-600" />
+                ขณะนี้ ({exactNow})
+              </button>
               {quickTimes.map((t) => (
                 <button
                   type="button"
@@ -212,9 +256,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                   type="button"
                   key={loc}
                   onClick={() => setLocation(loc)}
-                  className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 truncate max-w-xs text-left"
+                  className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 truncate max-w-xs transition-colors"
                 >
-                  {loc.split(' ')[0]}...
+                  {loc.split(' ')[0]} {loc.split(' ')[1] || ''}
                 </button>
               ))}
             </div>
@@ -224,26 +268,25 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Shirt className="w-4 h-4 text-amber-600" />
-                การแต่งกาย <span className="text-red-500">*</span>
+                <Shirt className="w-4 h-4 text-amber-500" />
+                การแต่งกาย
               </label>
               <input
                 type="text"
                 value={dressCode}
                 onChange={(e) => setDressCode(e.target.value)}
-                required
-                placeholder="เช่น ชุดสุภาพไว้ทุกข์, ชุดจิตอาสา เสื้อสีดำ"
+                placeholder="เช่น ชุดสุภาพไว้ทุกข์"
                 className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <div className="flex flex-wrap gap-1 mt-1.5">
-                {COMMON_DRESS_CODES.slice(0, 4).map((d) => (
+                {COMMON_DRESS_CODES.slice(0, 3).map((dc) => (
                   <button
                     type="button"
-                    key={d}
-                    onClick={() => setDressCode(d)}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100"
+                    key={dc}
+                    onClick={() => setDressCode(dc)}
+                    className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
                   >
-                    {d}
+                    {dc}
                   </button>
                 ))}
               </div>
@@ -251,47 +294,44 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
             <div>
               <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-slate-500" />
-                หน่วยงานรับผิดชอบ <span className="text-red-500">*</span>
+                <Building2 className="w-4 h-4 text-indigo-500" />
+                หน่วยงานผู้รับผิดชอบ / ประสานงาน
               </label>
               <input
                 type="text"
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                required
                 placeholder="เช่น สำนักงานจังหวัดลพบุรี (กลุ่มงานอำนวยการ)"
                 className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
               />
               <div className="flex flex-wrap gap-1 mt-1.5">
-                {COMMON_DEPARTMENTS.slice(0, 3).map((dept) => (
+                {COMMON_DEPARTMENTS.slice(0, 2).map((dept) => (
                   <button
                     type="button"
                     key={dept}
                     onClick={() => setDepartment(dept)}
-                    className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 hover:bg-slate-200 truncate max-w-[200px]"
+                    className="text-[11px] px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 truncate max-w-[200px] transition-colors"
                   >
-                    {dept}
+                    {dept.split(' ')[0]}
                   </button>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* Footer buttons */}
-          <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-2.5">
+          {/* Form Actions */}
+          <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
             {editingItem && onDelete ? (
               <button
                 type="button"
                 onClick={() => {
-                  const idToDelete = editingItem.id;
+                  onDelete(editingItem.id);
                   onClose();
-                  onDelete(idToDelete);
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-lg border border-rose-200 transition-colors cursor-pointer"
-                title="ลบวาระงานนี้ออกจากตาราง"
+                className="inline-flex items-center gap-1 px-3 py-2 text-xs font-medium text-rose-600 hover:text-white hover:bg-rose-600 rounded-lg border border-rose-200 hover:border-rose-600 transition-colors"
               >
                 <Trash2 className="w-3.5 h-3.5" />
-                <span>ลบวาระงานนี้</span>
+                ลบวาระงานนี้
               </button>
             ) : (
               <div />
@@ -301,15 +341,15 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+                className="px-4 py-2 text-xs font-medium text-slate-700 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 ยกเลิก
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 text-sm font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-sm transition-colors cursor-pointer"
+                className="px-5 py-2 text-xs font-semibold text-white bg-blue-700 hover:bg-blue-800 rounded-lg shadow-sm transition-colors"
               >
-                {editingItem ? 'บันทึกการแก้ไข' : 'บันทึกข้อมูล'}
+                {editingItem ? 'บันทึกการแก้ไข' : 'เพิ่มวาระงาน'}
               </button>
             </div>
           </div>

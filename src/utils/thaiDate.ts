@@ -57,3 +57,49 @@ export function getTodayString(): string {
   const day = String(d.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+export function isToday(dateStr: string): boolean {
+  return dateStr === getTodayString();
+}
+
+/**
+ * Returns current time formatted in official Thai style (e.g. "09.30 น." or "๐๙.๓๐ น.")
+ */
+export function getCurrentThaiTime(useThaiNumerals = false, roundToNearest5 = true): string {
+  const now = new Date();
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  if (roundToNearest5) {
+    minutes = Math.round(minutes / 5) * 5;
+    if (minutes >= 60) {
+      minutes = 0;
+      hours = (hours + 1) % 24;
+    }
+  }
+
+  const hStr = String(hours).padStart(2, '0');
+  const mStr = String(minutes).padStart(2, '0');
+  const timeFormatted = `${hStr}.${mStr} น.`;
+
+  return useThaiNumerals ? toThaiNumerals(timeFormatted) : timeFormatted;
+}
+
+/**
+ * Returns current exact time (e.g. "09.32 น.") without rounding
+ */
+export function getCurrentExactThaiTime(useThaiNumerals = false): string {
+  return getCurrentThaiTime(useThaiNumerals, false);
+}
+
+/**
+ * Returns a live full Thai clock string for headers (e.g. "๑๔:๓๐:๑๕ น.")
+ */
+export function formatLiveThaiClock(dateObj: Date = new Date(), useThaiNumerals = false, includeSeconds = true): string {
+  const h = String(dateObj.getHours()).padStart(2, '0');
+  const m = String(dateObj.getMinutes()).padStart(2, '0');
+  const s = String(dateObj.getSeconds()).padStart(2, '0');
+
+  const timePart = includeSeconds ? `${h}:${m}:${s} น.` : `${h}:${m} น.`;
+  return useThaiNumerals ? toThaiNumerals(timePart) : timePart;
+}

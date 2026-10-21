@@ -1,4 +1,5 @@
 import { Executive, ScheduleItem, DocumentSettings } from '../types/schedule';
+import { getTodayString } from '../utils/thaiDate';
 
 export const INITIAL_EXECUTIVES: Executive[] = [
   // วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี
@@ -62,13 +63,12 @@ export const INITIAL_EXECUTIVES: Executive[] = [
   },
 ];
 
-export const INITIAL_SCHEDULES: ScheduleItem[] = [
+const RAW_SAMPLE_ITEMS: Omit<ScheduleItem, 'date'>[] = [
   // --- High Executives (ผู้บริหารระดับสูงของจังหวัดลพบุรี) ---
   {
     id: 'sch-1',
     executiveId: 'exec-1',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '09.30 น.',
     agenda: 'ประธานกิจกรรมจิตอาสาเนื่องในวันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว (วันปิยมหาราช)',
     location: 'สถานีรถไฟลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -79,7 +79,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-2',
     executiveId: 'exec-1',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'ประธานการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -90,7 +89,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-3',
     executiveId: 'exec-1',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '16.00 น.',
     agenda: 'เยี่ยมการจัดทำดอกไม้จันทน์สำหรับประชาชน ร่วมถวายดอกไม้จันทน์ งานพระราชพิธีถวายพระเพลิงพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'โรบินสันไลฟ์สไตล์ ลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -101,7 +99,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-4',
     executiveId: 'exec-2',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -112,7 +109,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-5',
     executiveId: 'exec-3',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -123,7 +119,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-6',
     executiveId: 'exec-4',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '13.00 น.',
     agenda: 'ประธานฝ่ายฆราวาสและถวายการต้อนรับคณะกรรมการติดตาม ตรวจเยี่ยม และประเมินผลการดำเนินงานโครงการวัด ประชา รัฐ สร้างสุข หนกลาง ประจำปี พ.ศ. ๒๕๖๙',
     location: 'วัดเทพชัยมงคล อ.พัฒนานิคม จ.ลพบุรี',
@@ -134,7 +129,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-7',
     executiveId: 'exec-4',
     category: 'high_executives',
-    date: '2026-10-16',
     time: '15.00 น.',
     agenda: 'ประธานฝ่ายฆราวาสและถวายการต้อนรับคณะกรรมการติดตาม ตรวจเยี่ยม และประเมินผลการดำเนินงานโครงการวัด ประชา รัฐ สร้างสุข หนกลาง ประจำปี พ.ศ. ๒๕๖๙',
     location: 'วัดศรีจำปา อ.เมืองลพบุรี จ.ลพบุรี',
@@ -142,14 +136,13 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     department: 'สนง.พระพุทธศาสนาจังหวัดลพบุรี',
   },
 
-  // --- Provincial Office Executives (ผู้บริหารของสำนักงานจังหวัดลพบุรี) ---
+  // --- Provincial Office (สำนักงานจังหวัดลพบุรี) ---
   {
     id: 'sch-8',
     executiveId: 'exec-5',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '09.30 น.',
-    agenda: 'เข้าร่วมกิจกรรมจิตอาสาเนื่องในวันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว (วันปิยมหาราช)',
+    agenda: 'ร่วมกิจกรรมจิตอาสาเนื่องในวันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว (วันปิยมหาราช)',
     location: 'สถานีรถไฟลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
     dressCode: 'ชุดจิตอาสา เสื้อสีดำ',
     department: 'ศอ.ปส.จ.ลพบุรี',
@@ -158,9 +151,8 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-9',
     executiveId: 'exec-5',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '13.30 น.',
-    agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
+    agenda: 'ร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
     dressCode: 'ชุดสุภาพไว้ทุกข์',
     department: 'สำนักงานจังหวัดลพบุรี (กลุ่มงานอำนวยการ)',
@@ -169,9 +161,8 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-10',
     executiveId: 'exec-6',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '09.30 น.',
-    agenda: 'เข้าร่วมกิจกรรมจิตอาสาเนื่องในวันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว (วันปิยมหาราช)',
+    agenda: 'ร่วมกิจกรรมจิตอาสาเนื่องในวันคล้ายวันสวรรคตพระบาทสมเด็จพระจุลจอมเกล้าเจ้าอยู่หัว (วันปิยมหาราช)',
     location: 'สถานีรถไฟลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
     dressCode: 'ชุดจิตอาสา เสื้อสีดำ',
     department: 'ศอ.ปส.จ.ลพบุรี',
@@ -180,7 +171,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-11',
     executiveId: 'exec-6',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -191,7 +181,6 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-12',
     executiveId: 'exec-7',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
@@ -202,13 +191,29 @@ export const INITIAL_SCHEDULES: ScheduleItem[] = [
     id: 'sch-13',
     executiveId: 'exec-8',
     category: 'provincial_office',
-    date: '2026-10-16',
     time: '13.30 น.',
     agenda: 'เข้าร่วมการประชุมคณะกรรมการอำนวยการจัดกิจกรรมอันเกี่ยวเนื่องกับงานพระบรมศพ สมเด็จพระนางเจ้าสิริกิติ์ พระบรมราชินีนาถ พระบรมราชชนนีพันปีหลวง',
     location: 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
     dressCode: 'ชุดสุภาพไว้ทุกข์',
     department: 'สำนักงานจังหวัดลพบุรี (กลุ่มงานอำนวยการ)',
   },
+];
+
+const today = getTodayString();
+
+export const INITIAL_SCHEDULES: ScheduleItem[] = [
+  ...RAW_SAMPLE_ITEMS.map((item) => ({
+    ...item,
+    id: `today-${item.id}`,
+    date: today,
+  })),
+  ...(today !== '2026-10-16'
+    ? RAW_SAMPLE_ITEMS.map((item) => ({
+        ...item,
+        id: `sample-${item.id}`,
+        date: '2026-10-16',
+      }))
+    : []),
 ];
 
 export const INITIAL_SETTINGS: DocumentSettings = {
