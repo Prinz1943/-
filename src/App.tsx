@@ -107,10 +107,11 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY_SETTINGS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (!parsed.customSealUrl || parsed.customSealUrl === '') {
-          parsed.customSealUrl = '/assets/lopburi-seal.jpg';
-        }
-        return parsed;
+        return {
+          ...INITIAL_SETTINGS,
+          ...parsed,
+          customSealUrl: parsed.customSealUrl || '/assets/lopburi-seal.jpg',
+        };
       }
       return INITIAL_SETTINGS;
     } catch {
@@ -699,6 +700,7 @@ export default function App() {
             onDeleteExecutive={handleDeleteExecutive}
             onAddExecutive={handleOpenAddExecutive}
             onSwitchView={(mode) => setViewMode(mode)}
+            onOpenSettings={() => setIsSettingsModalOpen(true)}
           />
         </div>
         {viewMode === 'cards' && (
@@ -716,6 +718,8 @@ export default function App() {
               onAddSchedule={handleOpenAddSchedule}
               onEditExecutive={handleOpenEditExecutive}
               onDeleteExecutive={handleDeleteExecutive}
+              settings={settings}
+              onOpenSettings={() => setIsSettingsModalOpen(true)}
             />
           </div>
         )}

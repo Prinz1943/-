@@ -1,8 +1,8 @@
 import React from 'react';
 import { Executive, ScheduleItem, DocumentSettings, CategoryType } from '../types/schedule';
 import { LopburiEmblem } from './LopburiEmblem';
-import { formatThaiDateTitle, formatTimeDisplay, isToday } from '../utils/thaiDate';
-import { Edit2, Plus, Trash2, Printer, Copy, Check, FileDown, Eye, UserPlus, Loader2, Lock, LayoutGrid } from 'lucide-react';
+import { formatThaiDateTitle, formatTimeDisplay, isToday, formatDocumentStatusTimestamp, toThaiNumerals, toArabicNumerals } from '../utils/thaiDate';
+import { Edit2, Plus, Trash2, Printer, Copy, Check, FileDown, Eye, UserPlus, Loader2, Lock, LayoutGrid, Settings } from 'lucide-react';
 import { exportDocumentToPdf } from '../utils/pdfGenerator';
 
 interface OfficialDocumentViewProps {
@@ -20,6 +20,7 @@ interface OfficialDocumentViewProps {
   onDeleteExecutive: (id: string) => void;
   onAddExecutive: (category: CategoryType) => void;
   onSwitchView?: (view: 'document' | 'cards') => void;
+  onOpenSettings?: () => void;
 }
 
 export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
@@ -37,9 +38,20 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
   onDeleteExecutive,
   onAddExecutive,
   onSwitchView,
+  onOpenSettings,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [isExportingPdf, setIsExportingPdf] = React.useState(false);
+  const [liveDate, setLiveDate] = React.useState<Date>(new Date());
+
+  React.useEffect(() => {
+    // Keep live time current
+    const timer = setInterval(() => {
+      setLiveDate(new Date());
+    }, 15000);
+    return () => clearInterval(timer);
+  }, []);
+
 
   // Determine which sections to render
   const sectionsToRender: { id: CategoryType; title: string }[] = [];
@@ -482,6 +494,54 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                       );
                     });
                   })}
+
+                  {/* Bottom Document Table Footer Row (ส่วนล่างตามภาพที่ ๑) */}
+                  {settings.showDocumentFooter !== false && (
+                    <tr className="bg-white">
+                      <td
+                        colSpan={6}
+                        className="border-2 border-black px-3 sm:px-4 py-2.5 font-sarabun text-black text-left text-[13.5px] sm:text-[14.5px] leading-relaxed"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex flex-wrap items-baseline gap-1">
+                            <span className="font-bold shrink-0">จัดทำโดย :</span>
+                            <span className="text-black font-normal">
+                              {settings.useThaiNumerals
+                                ? toThaiNumerals(
+                                    settings.preparedByText ||
+                                      'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)'
+                                  )
+                                : toArabicNumerals(
+                                    settings.preparedByText ||
+                                      'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. 086-0382745)'
+                                  )}
+                            </span>
+                            {isAdmin && onOpenSettings && (
+                              <button
+                                type="button"
+                                onClick={onOpenSettings}
+                                className="no-print ml-2 text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-1.5 py-0.5 rounded inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                title="แก้ไขข้อความส่วนท้ายในหน้าตั้งค่า"
+                              >
+                                <Edit2 className="w-2.5 h-2.5" /> แก้ไขส่วนท้าย
+                              </button>
+                            )}
+                          </div>
+                          <div className="flex flex-wrap items-baseline gap-1 pl-6 sm:pl-10 text-black">
+                            <span className="font-bold shrink-0">สถานะ :</span>
+                            <span className="text-black font-normal">
+                              {formatDocumentStatusTimestamp(
+                                date,
+                                settings.useThaiNumerals,
+                                settings.statusTimestampOption === 'custom' ? settings.customStatusTime : undefined,
+                                liveDate
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -493,9 +553,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
               </div>
             )}
 
-            {/* Print Footer */}
-            <div className="print-only text-right text-xs text-black font-sarabun mt-4">
-              พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี
+            {/* Document Source Footer (ส่วนล่างตามภาพที่ ๒ - แสดงทั้งบนหน้าจอและพิมพ์) */}
+            <div className="text-right text-[12px] sm:text-[13px] text-slate-800 font-sarabun mt-2.5 font-normal">
+              {settings.printFooterText || 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'}
             </div>
           </div>
         );

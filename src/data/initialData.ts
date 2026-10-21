@@ -224,6 +224,11 @@ export const INITIAL_SETTINGS: DocumentSettings = {
   customSealUrl: '/assets/lopburi-seal.jpg',
   provinceName: 'จังหวัดลพบุรี',
   adminPasscode: '1567',
+  showDocumentFooter: true,
+  preparedByText: 'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)',
+  statusTimestampOption: 'auto',
+  customStatusTime: '',
+  printFooterText: 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี',
 };
 
 export const COMMON_DRESS_CODES = [

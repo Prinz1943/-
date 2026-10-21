@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { DocumentSettings, Executive, ScheduleItem } from '../types/schedule';
 import { INITIAL_EXECUTIVES, INITIAL_SCHEDULES, INITIAL_SETTINGS } from '../data/initialData';
-import { X, Settings, RotateCcw, Download, Upload, Shield, Type, Sliders } from 'lucide-react';
+import { X, Settings, RotateCcw, Download, Upload, Shield, Type, Sliders, FileText } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -23,10 +23,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onRestoreData,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [notificationMsg, setNotificationMsg] = React.useState('');
 
   if (!isOpen) return null;
-
-  const [notificationMsg, setNotificationMsg] = React.useState('');
 
   const handleResetToSample = () => {
     onRestoreData(INITIAL_EXECUTIVES, INITIAL_SCHEDULES, INITIAL_SETTINGS);
@@ -245,6 +244,167 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Document Footer Section (ส่วนล่างของเอกสารราชการตามภาพ) */}
+          <div className="space-y-4 pt-4 border-t border-slate-200">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <FileText className="w-4 h-4 text-emerald-600" /> ส่วนล่างของตารางเอกสาร (Footer)
+            </h4>
+
+            {/* Toggle show footer */}
+            <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+              <div>
+                <div className="text-sm font-semibold text-slate-800">
+                  แสดงแถบส่วนล่างในตารางเอกสาร
+                </div>
+                <div className="text-xs text-slate-500">
+                  แสดงช่อง "จัดทำโดย" และ "สถานะวันเวลา" ด้านล่างของตาราง
+                </div>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={settings.showDocumentFooter !== false}
+                  onChange={(e) =>
+                    onUpdateSettings({ ...settings, showDocumentFooter: e.target.checked })
+                  }
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+              </label>
+            </div>
+
+            {settings.showDocumentFooter !== false && (
+              <div className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4">
+                {/* Prepared By text */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-800">
+                      ข้อความ "จัดทำโดย :"
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateSettings({
+                          ...settings,
+                          preparedByText:
+                            'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)',
+                        })
+                      }
+                      className="text-[11px] text-blue-600 hover:underline cursor-pointer"
+                    >
+                      คืนค่ามาตรฐาน
+                    </button>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={
+                      settings.preparedByText ??
+                      'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)'
+                    }
+                    onChange={(e) =>
+                      onUpdateSettings({ ...settings, preparedByText: e.target.value })
+                    }
+                    className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sarabun"
+                    placeholder="กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)"
+                  />
+                </div>
+
+                {/* Status Timestamp Option */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-800 mb-1.5">
+                    รูปแบบ "สถานะ :"
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateSettings({
+                          ...settings,
+                          statusTimestampOption: 'auto',
+                        })
+                      }
+                      className={`px-3 py-2 rounded-lg text-xs font-medium border text-left transition-all cursor-pointer ${
+                        settings.statusTimestampOption !== 'custom'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold ring-1 ring-emerald-500'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div>อัปเดตวันและเวลาปัจจุบันเสมอ</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        (เช่น ๒๐ ตุลาคม ๒๕๖๙ เวลา ๑๖.๓๐ น.)
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateSettings({
+                          ...settings,
+                          statusTimestampOption: 'custom',
+                        })
+                      }
+                      className={`px-3 py-2 rounded-lg text-xs font-medium border text-left transition-all cursor-pointer ${
+                        settings.statusTimestampOption === 'custom'
+                          ? 'border-emerald-500 bg-emerald-50 text-emerald-900 font-semibold ring-1 ring-emerald-500'
+                          : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                      }`}
+                    >
+                      <div>กำหนดข้อความสถานะเอง</div>
+                      <div className="text-[10px] text-slate-500 mt-0.5">
+                        ระบุวันที่หรือเวลาที่ต้องการเจาะจง
+                      </div>
+                    </button>
+                  </div>
+
+                  {settings.statusTimestampOption === 'custom' && (
+                    <input
+                      type="text"
+                      value={settings.customStatusTime || ''}
+                      onChange={(e) =>
+                        onUpdateSettings({ ...settings, customStatusTime: e.target.value })
+                      }
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sarabun mt-1"
+                      placeholder="เช่น ๒๐ ตุลาคม ๒๕๖๙ เวลา ๑๖.๓๐ น."
+                    />
+                  )}
+                </div>
+
+                {/* Print Footer Text */}
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="text-xs font-semibold text-slate-800">
+                      ข้อความระบุระบบใต้ตาราง (พิมพ์จาก...):
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onUpdateSettings({
+                          ...settings,
+                          printFooterText: 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี',
+                        })
+                      }
+                      className="text-[11px] text-blue-600 hover:underline cursor-pointer"
+                    >
+                      คืนค่ามาตรฐาน
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    value={
+                      settings.printFooterText ??
+                      'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'
+                    }
+                    onChange={(e) =>
+                      onUpdateSettings({ ...settings, printFooterText: e.target.value })
+                    }
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sarabun"
+                    placeholder="พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี"
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Backup & Restore */}

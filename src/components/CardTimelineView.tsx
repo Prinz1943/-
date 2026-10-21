@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Executive, ScheduleItem, CategoryType } from '../types/schedule';
-import { formatTimeDisplay, formatThaiDateTitle } from '../utils/thaiDate';
+import { Executive, ScheduleItem, CategoryType, DocumentSettings } from '../types/schedule';
+import { formatTimeDisplay, formatThaiDateTitle, formatDocumentStatusTimestamp, toThaiNumerals, toArabicNumerals } from '../utils/thaiDate';
 import {
   Clock,
   MapPin,
@@ -29,6 +29,8 @@ interface CardTimelineViewProps {
   onAddSchedule: (prefill?: Partial<ScheduleItem>) => void;
   onEditExecutive?: (exec: Executive) => void;
   onDeleteExecutive?: (id: string) => void;
+  settings?: DocumentSettings;
+  onOpenSettings?: () => void;
 }
 
 export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
@@ -44,6 +46,8 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
   onAddSchedule,
   onEditExecutive,
   onDeleteExecutive,
+  settings,
+  onOpenSettings,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExecId, setSelectedExecId] = useState<string>('all');
@@ -410,6 +414,48 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Bottom Document Footer Information (ส่วนล่างตามภาพ) */}
+      {settings?.showDocumentFooter !== false && (
+        <div className="bg-white rounded-xl shadow-xs border border-slate-200 p-4 font-sarabun text-xs sm:text-sm text-slate-800 mt-6 space-y-2">
+          <div className="flex flex-wrap items-baseline gap-1">
+            <span className="font-bold text-slate-900">จัดทำโดย :</span>
+            <span>
+              {useThaiNumerals
+                ? toThaiNumerals(
+                    settings?.preparedByText ||
+                      'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)'
+                  )
+                : toArabicNumerals(
+                    settings?.preparedByText ||
+                      'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. 086-0382745)'
+                  )}
+            </span>
+            {isAdmin && onOpenSettings && (
+              <button
+                type="button"
+                onClick={onOpenSettings}
+                className="text-[11px] text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded ml-2 inline-flex items-center gap-1 cursor-pointer transition-colors"
+              >
+                <Edit2 className="w-2.5 h-2.5" /> แก้ไขส่วนท้าย
+              </button>
+            )}
+          </div>
+          <div className="pl-4 sm:pl-6 text-slate-700">
+            <span className="font-bold text-slate-900">สถานะ :</span>{' '}
+            <span>
+              {formatDocumentStatusTimestamp(
+                date,
+                useThaiNumerals,
+                settings?.statusTimestampOption === 'custom' ? settings?.customStatusTime : undefined
+              )}
+            </span>
+          </div>
+          <div className="text-right text-[11px] text-slate-400 pt-2 border-t border-slate-100">
+            {settings?.printFooterText || 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'}
+          </div>
         </div>
       )}
     </div>

@@ -30,4 +30,11 @@ export interface DocumentSettings {
   customSealUrl?: string;
   provinceName: string;
   adminPasscode: string;
+  // Footer document settings (ส่วนล่างของเอกสารตามภาพ)
+  showDocumentFooter?: boolean;
+  preparedByText?: string;
+  statusTimestampOption?: 'auto' | 'custom';
+  customStatusTime?: string;
+  printFooterText?: string;
 }
+

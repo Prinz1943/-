@@ -103,3 +103,40 @@ export function formatLiveThaiClock(dateObj: Date = new Date(), useThaiNumerals 
   const timePart = includeSeconds ? `${h}:${m}:${s} น.` : `${h}:${m} น.`;
   return useThaiNumerals ? toThaiNumerals(timePart) : timePart;
 }
+
+/**
+ * Returns formatted status timestamp for the official table footer (e.g. "๒๐ ตุลาคม ๒๕๖๙ เวลา ๑๖.๓๐ น.")
+ */
+export function formatDocumentStatusTimestamp(
+  dateStr?: string,
+  useThaiNumerals = true,
+  customStatus?: string,
+  liveDateObj?: Date
+): string {
+  if (customStatus && customStatus.trim()) {
+    return useThaiNumerals ? toThaiNumerals(customStatus) : toArabicNumerals(customStatus);
+  }
+
+  const targetDate = dateStr || getTodayString();
+  const [yearStr, monthStr, dayStr] = targetDate.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10) - 1;
+  const day = parseInt(dayStr, 10);
+  const buddhistYear = year + 543;
+  const monthName = THAI_MONTHS_FULL[month] ?? '';
+
+  const now = liveDateObj || new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const timeFormatted = `${hours}.${minutes} น.`;
+
+  if (useThaiNumerals) {
+    const thaiDay = toThaiNumerals(day);
+    const thaiYear = toThaiNumerals(buddhistYear);
+    const thaiTime = toThaiNumerals(timeFormatted);
+    return `${thaiDay} ${monthName} ${thaiYear} เวลา ${thaiTime}`;
+  } else {
+    return `${day} ${monthName} ${buddhistYear} เวลา ${timeFormatted}`;
+  }
+}
+
