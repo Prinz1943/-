@@ -49,7 +49,23 @@ import {
   Loader2,
   Clock,
   Zap,
+  Cloud,
 } from 'lucide-react';
+
+import {
+  db,
+  handleFirestoreError,
+  OperationType,
+  seedInitialDataIfEmpty,
+  saveScheduleToFirestore,
+  deleteScheduleFromFirestore,
+  saveExecutiveToFirestore,
+  deleteExecutiveFromFirestore,
+  saveSettingsToFirestore,
+  batchSaveExecutivesToFirestore,
+  batchRestoreDataToFirestore,
+} from './firebase';
+import { collection, onSnapshot, doc } from 'firebase/firestore';
 
 const STORAGE_KEY_EXECS = 'lopburi_schedule_executives_v1';
 const STORAGE_KEY_SCHEDS = 'lopburi_schedule_items_v1';
@@ -129,6 +145,70 @@ export default function App() {
   });
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
+  // Real-time Firestore synchronization
+  useEffect(() => {
+    // Seed initial data if Firestore collections are empty
+    seedInitialDataIfEmpty();
+
+    // 1. Listen to executives collection
+    const unsubExecs = onSnapshot(
+      collection(db, 'executives'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const loadedExecs: Executive[] = [];
+          snapshot.forEach((d) => {
+            loadedExecs.push(d.data() as Executive);
+          });
+          loadedExecs.sort((a, b) => a.order - b.order);
+          setExecutives(loadedExecs);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'executives');
+      }
+    );
+
+    // 2. Listen to schedules collection
+    const unsubScheds = onSnapshot(
+      collection(db, 'schedules'),
+      (snapshot) => {
+        if (!snapshot.empty) {
+          const loadedScheds: ScheduleItem[] = [];
+          snapshot.forEach((d) => {
+            loadedScheds.push(d.data() as ScheduleItem);
+          });
+          setSchedules(loadedScheds);
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.LIST, 'schedules');
+      }
+    );
+
+    // 3. Listen to settings/config document
+    const unsubSettings = onSnapshot(
+      doc(db, 'settings', 'config'),
+      (snapshot) => {
+        if (snapshot.exists()) {
+          const loadedSettings = snapshot.data() as DocumentSettings;
+          setSettings((prev) => ({
+            ...prev,
+            ...loadedSettings,
+          }));
+        }
+      },
+      (error) => {
+        handleFirestoreError(error, OperationType.GET, 'settings/config');
+      }
+    );
+
+    return () => {
+      unsubExecs();
+      unsubScheds();
+      unsubSettings();
+    };
+  }, []);
+
   // Selected date: defaults to today's date (always current)
   const [selectedDate, setSelectedDate] = useState<string>(() => getTodayString());
 
@@ -170,20 +250,21 @@ export default function App() {
     setIsExecEditModalOpen(true);
   };
 
-  const handleSaveExecutive = (execData: {
+  const handleSaveExecutive = async (execData: {
     id?: string;
     name: string;
     position: string;
     category: CategoryType;
   }) => {
     if (execData.id) {
+      const updatedExec = {
+        ...(executives.find((e) => e.id === execData.id) as Executive),
+        ...execData,
+      } as Executive;
       setExecutives((prev) =>
-        prev.map((e) =>
-          e.id === execData.id
-            ? { ...e, name: execData.name, position: execData.position, category: execData.category }
-            : e
-        )
+        prev.map((e) => (e.id === execData.id ? updatedExec : e))
       );
+      await saveExecutiveToFirestore(updatedExec);
     } else {
       const maxOrder = executives
         .filter((e) => e.category === execData.category)
@@ -197,7 +278,13 @@ export default function App() {
         order: maxOrder + 1,
       };
       setExecutives((prev) => [...prev, newExec]);
+      await saveExecutiveToFirestore(newExec);
     }
+  };
+
+  const handleSaveExecutives = async (newExecs: Executive[]) => {
+    setExecutives(newExecs);
+    await batchSaveExecutivesToFirestore(newExecs);
   };
 
   // In-app confirmation dialog state (replaces window.confirm blocked by iframes)
@@ -225,10 +312,11 @@ export default function App() {
     setConfirmState({
       isOpen: true,
       title: 'ยืนยันการลบผู้บริหาร',
-      message: `ต้องการลบ "${name}" ออกจากทำเนียบผู้บริหารของตารางใช่หรือไม่?`,
+      message: `ต้องการลบ "${name}" ออกจากทำเนียบผู้บริหารของตารางและคลาวด์ใช่หรือไม่?`,
       confirmText: 'ยืนยันลบ',
-      onConfirm: () => {
+      onConfirm: async () => {
         setExecutives((prev) => prev.filter((e) => e.id !== id));
+        await deleteExecutiveFromFirestore(id);
       },
     });
   };
@@ -251,7 +339,7 @@ export default function App() {
     });
   };
 
-  // Save to localStorage whenever data changes
+  // Save to localStorage as offline cache
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_EXECS, JSON.stringify(executives));
   }, [executives]);
@@ -264,19 +352,22 @@ export default function App() {
     localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
   }, [settings]);
 
-  // Handlers for Schedule items
-  const handleSaveSchedule = (itemData: Partial<ScheduleItem>) => {
+  // Handlers for Schedule items (Syncs to Firestore)
+  const handleSaveSchedule = async (itemData: Partial<ScheduleItem>) => {
+    let targetItem: ScheduleItem;
     if (itemData.id) {
-      // Edit existing
+      targetItem = {
+        ...(schedules.find((s) => s.id === itemData.id) as ScheduleItem),
+        ...itemData,
+      } as ScheduleItem;
       setSchedules((prev) =>
-        prev.map((s) => (s.id === itemData.id ? ({ ...s, ...itemData } as ScheduleItem) : s))
+        prev.map((s) => (s.id === itemData.id ? targetItem : s))
       );
     } else {
-      // Add new
-      const newItem: ScheduleItem = {
+      targetItem = {
         id: `sch-${Date.now()}`,
         executiveId: itemData.executiveId || executives[0]?.id || 'exec-1',
-        category: itemData.category || 'high_executives',
+        category: itemData.category || (activeCategory === 'all' ? 'high_executives' : activeCategory),
         date: itemData.date || selectedDate,
         time: itemData.time || '09.30 น.',
         agenda: itemData.agenda || '',
@@ -284,8 +375,9 @@ export default function App() {
         dressCode: itemData.dressCode || '',
         department: itemData.department || '',
       };
-      setSchedules((prev) => [...prev, newItem]);
+      setSchedules((prev) => [...prev, targetItem]);
     }
+    await saveScheduleToFirestore(targetItem);
   };
 
   const handleDeleteSchedule = (id: string) => {
@@ -298,10 +390,11 @@ export default function App() {
     setConfirmState({
       isOpen: true,
       title: 'ยืนยันการลบวาระงาน',
-      message: `ต้องการลบวาระงาน${agendaText} ใช่หรือไม่?`,
+      message: `ต้องการลบวาระงาน${agendaText} จากคลาวด์ Firestore ใช่หรือไม่?`,
       confirmText: 'ยืนยันลบ',
-      onConfirm: () => {
+      onConfirm: async () => {
         setSchedules((prev) => prev.filter((s) => s.id !== id));
+        await deleteScheduleFromFirestore(id);
       },
     });
   };
@@ -330,6 +423,11 @@ export default function App() {
     setIsScheduleModalOpen(true);
   };
 
+  const handleUpdateSettings = async (newSettings: DocumentSettings) => {
+    setSettings(newSettings);
+    await saveSettingsToFirestore(newSettings);
+  };
+
   // Date step helpers
   const handleStepDate = (direction: 'prev' | 'next') => {
     const [y, m, d] = selectedDate.split('-').map(Number);
@@ -341,7 +439,7 @@ export default function App() {
     setSelectedDate(`${newY}-${newM}-${newD}`);
   };
 
-  const handleRestoreSample = (
+  const handleRestoreSample = async (
     execs: Executive[],
     scheds: ScheduleItem[],
     setts: DocumentSettings
@@ -350,6 +448,7 @@ export default function App() {
     setSchedules(scheds);
     setSettings(setts);
     setSelectedDate('2026-10-16');
+    await batchRestoreDataToFirestore(execs, scheds, setts);
   };
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
@@ -439,6 +538,16 @@ export default function App() {
                 <Clock className="w-3.5 h-3.5 text-blue-600" />
                 <span>{formatLiveThaiClock(currentTime, settings.useThaiNumerals, true)}</span>
               </div>
+            </div>
+
+            {/* Cloud Persistence Indicator */}
+            <div
+              className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-emerald-50/80 border border-emerald-200 text-emerald-800 text-[11px] font-sans font-medium shrink-0"
+              title="ข้อมูลวาระงานและผู้บริหารเชื่อมต่อและบันทึกอัตโนมัติบน Google Cloud Firestore"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <Cloud className="w-3.5 h-3.5 text-emerald-600" />
+              <span className="hidden xl:inline">คลาวด์ Firebase</span>
             </div>
 
             {/* View Mode Toggle and Main Action Buttons */}
@@ -846,7 +955,7 @@ export default function App() {
         isOpen={isExecModalOpen}
         onClose={() => setIsExecModalOpen(false)}
         executives={executives}
-        onSaveExecutives={setExecutives}
+        onSaveExecutives={handleSaveExecutives}
       />
 
       <ExecutiveEditModal
@@ -865,7 +974,7 @@ export default function App() {
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
         settings={settings}
-        onUpdateSettings={setSettings}
+        onUpdateSettings={handleUpdateSettings}
         executives={executives}
         schedules={schedules}
         onRestoreData={handleRestoreSample}

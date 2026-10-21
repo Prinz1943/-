@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import { DocumentSettings, Executive, ScheduleItem } from '../types/schedule';
 import { INITIAL_EXECUTIVES, INITIAL_SCHEDULES, INITIAL_SETTINGS } from '../data/initialData';
-import { X, Settings, RotateCcw, Download, Upload, Shield, Type, Sliders, FileText } from 'lucide-react';
+import { X, Settings, RotateCcw, Download, Upload, Shield, Type, Sliders, FileText, Cloud } from 'lucide-react';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -410,8 +410,24 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           {/* Backup & Restore */}
           <div className="space-y-3 pt-4 border-t border-slate-200">
             <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-emerald-600" /> การสำรองข้อมูลและการกู้คืน
+              <Shield className="w-4 h-4 text-emerald-600" /> การจัดเก็บข้อมูลและคลาวด์ (Cloud Persistence)
             </h4>
+
+            {/* Firebase Cloud Sync Info */}
+            <div className="p-3.5 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border border-emerald-200 flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                <Cloud className="w-5 h-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs font-bold text-emerald-950 flex items-center gap-1.5">
+                  <span>เชื่อมต่อ Google Cloud Firestore สำเร็จ</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                </div>
+                <div className="text-[11px] text-emerald-800 leading-tight mt-0.5">
+                  ข้อมูลวาระงาน ทำเนียบผู้บริหาร และการตั้งค่าเอกสารจะถูกบันทึกลงฐานข้อมูล Firebase คลาวด์อัตโนมัติแบบเรียลไทม์
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               <button

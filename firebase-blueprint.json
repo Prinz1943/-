@@ -1,0 +1,157 @@
+{
+  "entities": {
+    "ScheduleItem": {
+      "title": "ScheduleItem",
+      "description": "An official schedule agenda item for a Lopburi provincial executive.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique schedule ID"
+        },
+        "executiveId": {
+          "type": "string",
+          "description": "ID of the assigned executive"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["high_executives", "provincial_office"],
+          "description": "Executive level category"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date in YYYY-MM-DD format"
+        },
+        "time": {
+          "type": "string",
+          "description": "Time of the event, e.g., 09.30 น."
+        },
+        "agenda": {
+          "type": "string",
+          "description": "Agenda description / mission title"
+        },
+        "location": {
+          "type": "string",
+          "description": "Meeting location or venue"
+        },
+        "dressCode": {
+          "type": "string",
+          "description": "Required dress code for attendees"
+        },
+        "department": {
+          "type": "string",
+          "description": "Responsible provincial department"
+        },
+        "note": {
+          "type": "string",
+          "description": "Optional notes or additional details"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO timestamp of last update"
+        }
+      },
+      "required": ["id", "executiveId", "category", "date", "time", "agenda", "location", "dressCode", "department"]
+    },
+    "Executive": {
+      "title": "Executive",
+      "description": "A provincial executive or director profile in Lopburi.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique executive ID"
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name with prefix and title"
+        },
+        "position": {
+          "type": "string",
+          "description": "Official government position"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["high_executives", "provincial_office"],
+          "description": "Executive category"
+        },
+        "order": {
+          "type": "number",
+          "description": "Display order rank in table"
+        }
+      },
+      "required": ["id", "name", "position", "category", "order"]
+    },
+    "SystemSettings": {
+      "title": "SystemSettings",
+      "description": "Document configuration, footer, and system appearance settings.",
+      "type": "object",
+      "properties": {
+        "useThaiNumerals": {
+          "type": "boolean",
+          "description": "Whether to format numbers with Thai digits"
+        },
+        "fontSize": {
+          "type": "string",
+          "enum": ["sm", "md", "lg"],
+          "description": "Document font size"
+        },
+        "showSeal": {
+          "type": "boolean",
+          "description": "Show Lopburi provincial seal"
+        },
+        "sealSize": {
+          "type": "number",
+          "description": "Seal diameter in pixels"
+        },
+        "customSealUrl": {
+          "type": "string",
+          "description": "Seal image URL"
+        },
+        "provinceName": {
+          "type": "string",
+          "description": "Name of province"
+        },
+        "adminPasscode": {
+          "type": "string",
+          "description": "Passcode for officer authentication"
+        },
+        "showDocumentFooter": {
+          "type": "boolean",
+          "description": "Show bottom table footer"
+        },
+        "preparedByText": {
+          "type": "string",
+          "description": "Prepared by officer and contact info text"
+        },
+        "statusTimestampOption": {
+          "type": "string",
+          "enum": ["auto", "custom"],
+          "description": "Status timestamp generation mode"
+        },
+        "customStatusTime": {
+          "type": "string",
+          "description": "Custom status date/time override string"
+        },
+        "printFooterText": {
+          "type": "string",
+          "description": "Bottom right document print source footer text"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "/schedules/{scheduleId}": {
+      "schema": "ScheduleItem",
+      "description": "Collection of executive schedule agendas"
+    },
+    "/executives/{executiveId}": {
+      "schema": "Executive",
+      "description": "List of provincial executives"
+    },
+    "/settings/config": {
+      "schema": "SystemSettings",
+      "description": "Global system and official document configuration"
+    }
+  }
+}
