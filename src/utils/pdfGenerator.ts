@@ -1,11 +1,80 @@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
+/**
+ * Pre-convert images inside the element to inline base64 data URLs
+ * to completely prevent html2canvas CORS / tainted canvas SecurityError.
+ */
+async function ensureImagesLoaded(element: HTMLElement): Promise<void> {
+  const images = element.querySelectorAll('img');
+  const promises = Array.from(images).map(async (img) => {
+    try {
+      if (!img.complete) {
+        await new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      }
+      if (img.src && !img.src.startsWith('data:')) {
+        const response = await fetch(img.src);
+        const blob = await response.blob();
+        await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            if (typeof reader.result === 'string') {
+              img.setAttribute('data-original-src', img.src);
+              img.src = reader.result;
+            }
+            resolve(true);
+          };
+          reader.onerror = () => resolve(false);
+          reader.readAsDataURL(blob);
+        });
+      }
+    } catch {
+      // Continue even if an image prefetch fails
+    }
+  });
+  await Promise.all(promises);
+}
+
+function restoreImages(element: HTMLElement) {
+  const images = element.querySelectorAll<HTMLImageElement>('img[data-original-src]');
+  images.forEach((img) => {
+    const orig = img.getAttribute('data-original-src');
+    if (orig) {
+      img.src = orig;
+      img.removeAttribute('data-original-src');
+    }
+  });
+}
+
+/**
+ * Direct file download trigger that works reliably across all browsers and devices
+ */
+function triggerFileDownload(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = fileName;
+  anchor.setAttribute('download', fileName);
+  anchor.style.display = 'none';
+  document.body.appendChild(anchor);
+  anchor.click();
+
+  setTimeout(() => {
+    if (anchor.parentNode) {
+      anchor.parentNode.removeChild(anchor);
+    }
+    URL.revokeObjectURL(url);
+  }, 1500);
+}
+
 export async function exportDocumentToPdf(
   elementIds: string[],
   fileName: string = 'วาระงานผู้บริหารจังหวัดลพบุรี.pdf',
   onProgress?: (status: boolean) => void
-): Promise<void> {
+): Promise<boolean> {
   try {
     if (onProgress) onProgress(true);
 
@@ -28,37 +97,53 @@ export async function exportDocumentToPdf(
       const el = document.getElementById(elementIds[i]);
       if (!el) continue;
 
+      // Ensure element is visible during capture
+      const originalDisplay = el.style.display;
+      if (window.getComputedStyle(el).display === 'none') {
+        el.style.display = 'block';
+      }
+
       // Temporarily hide .no-print elements
       const noPrintEls = el.querySelectorAll('.no-print');
       noPrintEls.forEach((item) => {
         (item as HTMLElement).style.setProperty('display', 'none', 'important');
       });
 
-      // Temporarily ensure desktop-width rendering so table columns don't compress on mobile screens
+      // Temporarily ensure high-resolution desktop width for sharp typography
       const originalWidth = el.style.width;
       const originalMaxWidth = el.style.maxWidth;
+      const originalMinWidth = el.style.minWidth;
       const originalBoxShadow = el.style.boxShadow;
       const originalBorder = el.style.border;
 
       el.style.width = '1200px';
       el.style.maxWidth = '1200px';
+      el.style.minWidth = '1200px';
       el.style.boxShadow = 'none';
       el.style.border = 'none';
 
+      // Pre-load and convert images to data URLs to guarantee zero canvas tainting
+      await ensureImagesLoaded(el);
+
       const canvas = await html2canvas(el, {
-        scale: 2, // 2x resolution for sharp TH Sarabun typography
+        scale: 2, // 2x sharp resolution for TH Sarabun typography
         useCORS: true,
-        allowTaint: true,
+        allowTaint: false, // Must be false so toDataURL never throws SecurityError
         backgroundColor: '#FFFFFF',
         logging: false,
         windowWidth: 1280,
       });
 
-      // Restore original element styles
+      // Restore images
+      restoreImages(el);
+
+      // Restore element original styles
       el.style.width = originalWidth;
       el.style.maxWidth = originalMaxWidth;
+      el.style.minWidth = originalMinWidth;
       el.style.boxShadow = originalBoxShadow;
       el.style.border = originalBorder;
+      el.style.display = originalDisplay;
 
       // Restore .no-print elements
       noPrintEls.forEach((item) => {
@@ -93,15 +178,25 @@ export async function exportDocumentToPdf(
     }
 
     if (pagesRendered > 0) {
-      pdf.save(fileName);
+      // 1. Direct Blob Download (Saves straight to local computer / device Downloads folder)
+      const pdfBlob = pdf.output('blob');
+      triggerFileDownload(pdfBlob, fileName);
+
+      // 2. Also execute pdf.save as secondary fallback
+      try {
+        pdf.save(fileName);
+      } catch (saveErr) {
+        console.warn('pdf.save note:', saveErr);
+      }
+
+      return true;
     } else {
-      // Fallback
-      window.print();
+      console.warn('No document elements found to render for PDF.');
+      return false;
     }
   } catch (error) {
     console.error('PDF export error:', error);
-    // Fallback to window.print if html2canvas/jspdf encounters an error
-    window.print();
+    return false;
   } finally {
     if (onProgress) onProgress(false);
   }

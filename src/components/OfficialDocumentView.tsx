@@ -42,6 +42,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [isExportingPdf, setIsExportingPdf] = React.useState(false);
+  const [downloadNotice, setDownloadNotice] = React.useState('');
   const [liveDate, setLiveDate] = React.useState<Date>(new Date());
 
   React.useEffect(() => {
@@ -72,7 +73,16 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
     const ids = sectionsToRender.map((s) => `document-sheet-${s.id}`);
     const catName = category === 'provincial_office' ? 'สำนักงานจังหวัด' : (category === 'all' ? 'รวมทั้งหมด' : 'ผู้บริหารระดับสูง');
     const fileName = `วาระงาน${catName}_จังหวัดลพบุรี_${date}.pdf`;
-    await exportDocumentToPdf(ids, fileName, setIsExportingPdf);
+    setDownloadNotice('กำลังสร้างไฟล์ PDF และดาวน์โหลดลงเครื่อง...');
+    const ok = await exportDocumentToPdf(ids, fileName, setIsExportingPdf);
+    if (ok) {
+      setDownloadNotice(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
+    } else {
+      setDownloadNotice('ไม่สามารถดาวน์โหลดไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
+    }
+    setTimeout(() => {
+      setDownloadNotice('');
+    }, 5000);
   };
 
   const handlePrint = () => {
@@ -200,6 +210,14 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Direct PDF Download Notice */}
+      {downloadNotice && (
+        <div className="no-print -mt-4 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl p-3 flex items-center gap-2.5 shadow-xs text-xs font-medium animate-in fade-in duration-200">
+          <FileDown className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{downloadNotice}</span>
+        </div>
+      )}
 
       {/* Mobile Hint Banner for Table Scrolling or Switch to Card View */}
       <div className="no-print sm:hidden -mt-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-3 flex items-center justify-between gap-2 shadow-2xs">

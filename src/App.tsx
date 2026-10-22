@@ -74,10 +74,10 @@ const STORAGE_KEY_ADMIN_AUTH = 'lopburi_admin_auth_v1';
 
 
 export default function App() {
-  // Real-time live clock (updates every second)
+  // Real-time live clock (calm without 1-second jitter)
   const [currentTime, setCurrentTime] = useState<Date>(() => new Date());
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -452,9 +452,11 @@ export default function App() {
   };
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [downloadNotification, setDownloadNotification] = useState<string>('');
 
   const handleExportPdf = async () => {
     setIsExportingPdf(true);
+    setDownloadNotification('กำลังสร้างไฟล์ PDF และดาวน์โหลดลงเครื่อง...');
     try {
       // Determine element IDs to capture based on activeCategory
       const elementIds: string[] = [];
@@ -468,7 +470,7 @@ export default function App() {
       // If in cards view, switch to document view for html2canvas capture
       if (viewMode === 'cards') {
         setViewMode('document');
-        await new Promise((r) => setTimeout(r, 200));
+        await new Promise((r) => setTimeout(r, 300));
       }
 
       const catName =
@@ -479,12 +481,20 @@ export default function App() {
           : 'ผู้บริหารระดับสูง';
       const fileName = `วาระงาน${catName}_จังหวัดลพบุรี_${selectedDate}.pdf`;
 
-      await exportDocumentToPdf(elementIds, fileName, (status) => setIsExportingPdf(status));
+      const success = await exportDocumentToPdf(elementIds, fileName, (status) => setIsExportingPdf(status));
+      if (success) {
+        setDownloadNotification(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
+      } else {
+        setDownloadNotification('ไม่สามารถดาวน์โหลดไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
+      }
     } catch (err) {
       console.error('PDF export error:', err);
-      window.print();
+      setDownloadNotification('เกิดข้อผิดพลาดในการสร้างไฟล์ PDF');
     } finally {
       setIsExportingPdf(false);
+      setTimeout(() => {
+        setDownloadNotification('');
+      }, 5000);
     }
   };
 
@@ -496,7 +506,25 @@ export default function App() {
   const formattedDateTitle = formatThaiDateTitle(selectedDate, settings.useThaiNumerals);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white relative">
+      {/* Toast Notification for PDF Direct Download */}
+      {downloadNotification && (
+        <div className="no-print fixed top-4 right-4 z-50 max-w-sm sm:max-w-md bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-200">
+          <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+            <FileDown className="w-4 h-4 text-emerald-400" />
+          </div>
+          <div className="text-xs font-sans font-medium text-slate-100 flex-1 leading-snug">
+            {downloadNotification}
+          </div>
+          <button
+            onClick={() => setDownloadNotification('')}
+            className="text-slate-400 hover:text-white text-xs px-1 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Top Banner Navigation (Hidden on print) */}
       <header className="no-print sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-2xs">
         <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
@@ -754,20 +782,17 @@ export default function App() {
                 ๑๖ ต.ค. (ตัวอย่าง)
               </button>
 
-              {/* Real-time Live Clock (ย้ายมาไว้ข้างแถบเลือกวันที่) */}
+              {/* Real-time Live Clock (กรอบเวลานิ่ง ไม่ขยับสั่นตามวินาที) */}
               <div
                 onClick={() => setSelectedDate(getTodayString())}
                 title="เวลาปัจจุบันขณะนี้ (คลิกเพื่อกลับสู่วันนี้)"
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-sans shadow-2xs shrink-0 cursor-pointer hover:bg-blue-50/50 hover:border-blue-200 transition-colors"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-xs font-sans shadow-2xs shrink-0 select-none cursor-pointer hover:bg-slate-50 transition-colors"
               >
-                <span className="relative flex h-2 w-2 shrink-0">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                 <span className="text-[11px] text-slate-500 hidden sm:inline">เวลาปัจจุบัน:</span>
                 <Clock className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                <span className="font-mono font-bold text-slate-800">
-                  {formatLiveThaiClock(currentTime, settings.useThaiNumerals, true)}
+                <span className="font-mono font-bold text-slate-800 tabular-nums">
+                  {formatLiveThaiClock(currentTime, settings.useThaiNumerals, false)}
                 </span>
               </div>
             </div>
