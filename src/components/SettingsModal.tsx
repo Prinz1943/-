@@ -382,7 +382,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                       onClick={() =>
                         onUpdateSettings({
                           ...settings,
-                          printFooterText: 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี',
+                          printFooterText: 'พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี',
                         })
                       }
                       className="text-[11px] text-blue-600 hover:underline cursor-pointer"
@@ -394,13 +394,13 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                     type="text"
                     value={
                       settings.printFooterText ??
-                      'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'
+                      'พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี'
                     }
                     onChange={(e) =>
                       onUpdateSettings({ ...settings, printFooterText: e.target.value })
                     }
                     className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-sarabun"
-                    placeholder="พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี"
+                    placeholder="พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี"
                   />
                 </div>
               </div>

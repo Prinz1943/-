@@ -454,7 +454,7 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
             </span>
           </div>
           <div className="text-right text-[11px] text-slate-400 pt-2 border-t border-slate-100">
-            {settings?.printFooterText || 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'}
+            {settings?.printFooterText || 'พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี'}
           </div>
         </div>
       )}

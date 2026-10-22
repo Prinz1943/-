@@ -573,7 +573,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
             {/* Document Source Footer (ส่วนล่างตามภาพที่ ๒ - แสดงทั้งบนหน้าจอและพิมพ์) */}
             <div className="text-right text-[12px] sm:text-[13px] text-slate-800 font-sarabun mt-2.5 font-normal">
-              {settings.printFooterText || 'พิมพ์จาก: ระบบจัดทำวาระงานผู้บริหารจังหวัดลพบุรี'}
+              {settings.printFooterText || 'พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี'}
             </div>
           </div>
         );
