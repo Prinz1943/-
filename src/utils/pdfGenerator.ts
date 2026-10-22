@@ -72,7 +72,7 @@ function triggerFileDownload(blob: Blob, fileName: string) {
 
 export async function exportDocumentToPdf(
   elementIds: string[],
-  fileName: string = 'ระบบตารางวาระงานผู้บริหาร_จังหวัดลพบุรี.pdf',
+  fileName: string = 'ระบบนัดหมายงานผู้บริหารจังหวัดลพบุรี.pdf',
   onProgress?: (status: boolean) => void
 ): Promise<boolean> {
   try {

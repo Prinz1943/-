@@ -228,7 +228,7 @@ export const INITIAL_SETTINGS: DocumentSettings = {
   preparedByText: 'กลุ่มงานอำนวยการ สำนักงานจังหวัดลพบุรี (นายเจริญชัย สีตะระโส ผู้อำนวยการกลุ่มงานอำนวยการ โทร. ๐๘๖-๐๓๘๒๗๔๕)',
   statusTimestampOption: 'auto',
   customStatusTime: '',
-  printFooterText: 'พิมพ์จาก: ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี',
+  printFooterText: 'พิมพ์จาก: ระบบนัดหมายงานผู้บริหารจังหวัดลพบุรี',
 };
 
 export const COMMON_DRESS_CODES = [

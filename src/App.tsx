@@ -537,7 +537,7 @@ export default function App() {
               <div className="min-w-0">
                 <div className="flex items-center gap-1.5">
                   <h1 className="text-sm sm:text-lg font-bold text-slate-900 leading-tight truncate sm:whitespace-normal">
-                    ระบบตารางวาระงานผู้บริหาร
+                    ระบบนัดหมายงานผู้บริหาร
                   </h1>
                   <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-semibold bg-amber-100 text-amber-900 border border-amber-200 shrink-0">
                     จังหวัดลพบุรี
@@ -1018,7 +1018,7 @@ export default function App() {
       {/* Footer (hidden on print) */}
       <footer className="no-print mt-auto py-6 border-t border-slate-200 text-center text-xs text-slate-500 bg-white">
         <p className="font-semibold text-slate-700">
-          ระบบตารางวาระงานผู้บริหาร จังหวัดลพบุรี • สำนักงานจังหวัดลพบุรี ศาลากลางจังหวัดลพบุรี
+          ระบบนัดหมายงานผู้บริหารจังหวัดลพบุรี • สำนักงานจังหวัดลพบุรี ศาลากลางจังหวัดลพบุรี
         </p>
         <p className="mt-1 text-slate-400">
           ตรงตามระเบียบงานสารบรรณและแบบฟอร์มทางราชการ รองรับการพิมพ์ A4 แนวนอน
