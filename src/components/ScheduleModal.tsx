@@ -123,45 +123,27 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 value={executiveId}
                 onChange={(e) => setExecutiveId(e.target.value)}
                 required
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                className="w-full text-sm bg-slate-50 border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-medium text-slate-900 cursor-pointer shadow-2xs"
               >
-                <optgroup label="วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี">
+                <optgroup label="🏛️ วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี">
                   {executives
                     .filter((e) => e.category === 'high_executives')
                     .map((exec) => (
                       <option key={exec.id} value={exec.id}>
-                        {exec.name} ({exec.position})
+                        {exec.name} — {exec.position}
                       </option>
                     ))}
                 </optgroup>
-                <optgroup label="วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี">
+                <optgroup label="🏢 วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี">
                   {executives
                     .filter((e) => e.category === 'provincial_office')
                     .map((exec) => (
                       <option key={exec.id} value={exec.id}>
-                        {exec.name} ({exec.position})
+                        {exec.name} — {exec.position}
                       </option>
                     ))}
                 </optgroup>
               </select>
-
-              {/* Quick Clickable Executive Chips */}
-              <div className="flex flex-wrap gap-1 mt-1.5 max-h-20 overflow-y-auto">
-                {executives.map((exec) => (
-                  <button
-                    type="button"
-                    key={exec.id}
-                    onClick={() => setExecutiveId(exec.id)}
-                    className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
-                      executiveId === exec.id
-                        ? 'bg-blue-600 text-white border-blue-600 font-semibold shadow-2xs'
-                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
-                    }`}
-                  >
-                    {exec.name}
-                  </button>
-                ))}
-              </div>
             </div>
 
             <div>
