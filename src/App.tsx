@@ -970,6 +970,7 @@ export default function App() {
         onDelete={handleDeleteSchedule}
         editingItem={editingSchedule}
         executives={executives}
+        schedules={schedules}
         defaultDate={selectedDate}
         defaultCategory={activeCategory === 'all' ? 'high_executives' : activeCategory}
       />
