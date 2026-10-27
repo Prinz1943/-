@@ -292,12 +292,12 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 backdrop-blur-xs overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-2xl sm:max-w-3xl overflow-hidden my-6 sm:my-8 animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-3xl lg:max-w-4xl overflow-visible my-6 sm:my-8 animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="px-6 sm:px-8 py-4 bg-slate-900 text-white rounded-t-2xl flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
             <FileText className="w-5 h-5 text-amber-400" />
-            <h3 className="text-base font-semibold">
+            <h3 className="text-base sm:text-lg font-semibold">
               {editingItem ? 'แก้ไขวาระงานผู้บริหาร' : 'เพิ่มวาระงานผู้บริหารใหม่'}
             </h3>
           </div>
@@ -311,7 +311,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
         {/* Success Notice Banner */}
         {successNotice && (
-          <div className="bg-emerald-50 border-b border-emerald-200 px-6 py-2.5 flex items-center justify-between text-emerald-800 text-xs sm:text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="bg-emerald-50 border-b border-emerald-200 px-6 sm:px-8 py-3 flex items-center justify-between text-emerald-800 text-xs sm:text-sm font-medium animate-in fade-in slide-in-from-top-2 duration-200">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{successNotice}</span>
@@ -328,14 +328,14 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
         {/* Validation Error Banner */}
         {validationError && (
-          <div className="bg-rose-50 border-b border-rose-200 px-6 py-2.5 text-rose-800 text-xs sm:text-sm font-medium flex items-center gap-2">
+          <div className="bg-rose-50 border-b border-rose-200 px-6 sm:px-8 py-3 text-rose-800 text-xs sm:text-sm font-medium flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-rose-500 shrink-0" />
             <span>{validationError}</span>
           </div>
         )}
 
         {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-5 sm:p-7 space-y-5 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6 sm:space-y-7">
           {/* Executive - Full Width with generous whitespace and breathing room */}
           <div className="bg-slate-50/80 p-3.5 sm:p-4 rounded-xl border border-slate-200/90 space-y-2">
             <div className="flex items-center justify-between">
@@ -511,6 +511,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               placeholder="พิมพ์หรือเลือกการแต่งกาย / ชุด..."
               customOptions={allCustomDress}
               presetOptions={COMMON_DRESS_CODES}
+              placement="top"
               onDeleteCustomOption={(opt) => {
                 setCustomDressCodes((prev) => {
                   const next = prev.filter((p) => p !== opt);
@@ -535,6 +536,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
               placeholder="พิมพ์หรือเลือกหน่วยงาน..."
               customOptions={allCustomDepts}
               presetOptions={COMMON_DEPARTMENTS}
+              placement="top"
               onDeleteCustomOption={(opt) => {
                 setCustomDepartments((prev) => {
                   const next = prev.filter((p) => p !== opt);
@@ -551,7 +553,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           </div>
 
           {/* Form Actions with Add Next and Clear buttons */}
-          <div className="pt-4 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-5 mt-2 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
             {/* Left buttons: Delete (if editing) & Clear all fields */}
             <div className="flex items-center gap-2">
               {editingItem && onDelete ? (

@@ -13,6 +13,7 @@ interface SearchableComboboxProps {
   presetOptions?: string[]; // รายการแนะนำมาตรฐาน
   onDeleteCustomOption?: (option: string) => void;
   helperText?: string;
+  placement?: 'bottom' | 'top' | 'auto';
 }
 
 export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
@@ -27,8 +28,10 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
   presetOptions = [],
   onDeleteCustomOption,
   helperText,
+  placement = 'auto',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [openUpward, setOpenUpward] = useState(placement === 'top');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -42,6 +45,29 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
+
+  // Compute placement direction
+  useEffect(() => {
+    if (placement === 'top') {
+      setOpenUpward(true);
+      return;
+    }
+    if (placement === 'bottom') {
+      setOpenUpward(false);
+      return;
+    }
+    if (isOpen && containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      // If space below is less than 280px and space above has more room, open upward
+      if (spaceBelow < 280 && spaceAbove > spaceBelow) {
+        setOpenUpward(true);
+      } else {
+        setOpenUpward(false);
+      }
+    }
+  }, [isOpen, placement]);
 
   // Filter options based on typed input
   const query = value.trim().toLowerCase();
@@ -148,9 +174,13 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
         </button>
       </div>
 
-      {/* Floating Dropdown Menu matching image_fae5a27b.png */}
+      {/* Floating Dropdown Menu with Smart Upward/Downward placement */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-xl shadow-xl max-h-64 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100">
+        <div
+          className={`absolute left-0 right-0 z-50 bg-white border border-slate-200 rounded-xl shadow-2xl max-h-72 sm:max-h-80 overflow-y-auto divide-y divide-slate-100 animate-in fade-in zoom-in-95 duration-100 ring-1 ring-black/5 ${
+            openUpward ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
+          }`}
+        >
           {/* Custom typed option if doesn't match */}
           {value.trim() && !isExactMatch && (
             <div className="p-1.5 bg-blue-50/50">
