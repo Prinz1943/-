@@ -36,5 +36,6 @@ export interface DocumentSettings {
   statusTimestampOption?: 'auto' | 'custom';
   customStatusTime?: string;
   printFooterText?: string;
+  orientation?: 'portrait' | 'landscape';
 }
 

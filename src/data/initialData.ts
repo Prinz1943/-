@@ -1,5 +1,83 @@
-import { Executive, ScheduleItem, DocumentSettings } from '../types/schedule';
+import { Executive, ScheduleItem, DocumentSettings, CategoryType } from '../types/schedule';
 import { getTodayString } from '../utils/thaiDate';
+
+export interface ExecutivePreset {
+  name: string;
+  position: string;
+  category: CategoryType;
+}
+
+export const PRESET_EXECUTIVES: ExecutivePreset[] = [
+  // ผู้บริหารระดับสูงของจังหวัดลพบุรี
+  {
+    name: 'นายวีรพงศ์ ฤทธิ์รอด',
+    position: 'ผู้ว่าราชการจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+  {
+    name: 'นายปรัชญา เปปะตัง',
+    position: 'รองผู้ว่าราชการจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+  {
+    name: 'ว่าที่ ร.ต.ทรงพล แป้นแก้ว',
+    position: 'รองผู้ว่าราชการจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+  {
+    name: 'นายประยูร ศิริวรรณ',
+    position: 'รองผู้ว่าราชการจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+  {
+    name: 'นายพิษณุ ประภาธนานันท์',
+    position: 'ปลัดจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+  {
+    name: 'นางสาวมัณฑนา สินนะ',
+    position: 'หัวหน้าสำนักงานจังหวัดลพบุรี',
+    category: 'high_executives',
+  },
+
+  // ผู้บริหารของสำนักงานจังหวัดลพบุรี
+  {
+    name: 'นางสาวมัณฑนา สินนะ',
+    position: 'หัวหน้าสำนักงานจังหวัดลพบุรี',
+    category: 'provincial_office',
+  },
+  {
+    name: 'นายเจริญชัย สีตะระโส',
+    position: 'ผู้อำนวยการกลุ่มงานอำนวยการ',
+    category: 'provincial_office',
+  },
+  {
+    name: 'นายมนูญ โอมชล',
+    position: 'ผู้อำนวยการกลุ่มงานศูนย์ดำรงธรรมจังหวัด',
+    category: 'provincial_office',
+  },
+  {
+    name: 'นางสาววัลลภา เย็นระยับ',
+    position: 'ผู้อำนวยการกลุ่มงานบริหารทรัพยากรบุคคล',
+    category: 'provincial_office',
+  },
+  {
+    name: 'นายศรีศักดิ์ ภูวิบูลย์พาณิชย์',
+    position: 'ผู้อำนวยการกลุ่มงานยุทธศาสตร์และข้อมูลเพื่อการพัฒนาจังหวัด',
+    category: 'provincial_office',
+  },
+];
+
+export const COMMON_EXECUTIVE_POSITIONS = [
+  'ผู้ว่าราชการจังหวัดลพบุรี',
+  'รองผู้ว่าราชการจังหวัดลพบุรี',
+  'ปลัดจังหวัดลพบุรี',
+  'หัวหน้าสำนักงานจังหวัดลพบุรี',
+  'ผู้อำนวยการกลุ่มงานอำนวยการ',
+  'ผู้อำนวยการกลุ่มงานศูนย์ดำรงธรรมจังหวัด',
+  'ผู้อำนวยการกลุ่มงานบริหารทรัพยากรบุคคล',
+  'ผู้อำนวยการกลุ่มงานยุทธศาสตร์และข้อมูลเพื่อการพัฒนาจังหวัด',
+];
 
 export const INITIAL_EXECUTIVES: Executive[] = [
   // วาระงานผู้บริหารระดับสูงของจังหวัดลพบุรี
@@ -31,6 +109,20 @@ export const INITIAL_EXECUTIVES: Executive[] = [
     category: 'high_executives',
     order: 4,
   },
+  {
+    id: 'exec-high-5',
+    name: 'นายพิษณุ ประภาธนานันท์',
+    position: 'ปลัดจังหวัดลพบุรี',
+    category: 'high_executives',
+    order: 5,
+  },
+  {
+    id: 'exec-high-6',
+    name: 'นางสาวมัณฑนา สินนะ',
+    position: 'หัวหน้าสำนักงานจังหวัดลพบุรี',
+    category: 'high_executives',
+    order: 6,
+  },
 
   // วาระงานผู้บริหารของสำนักงานจังหวัดลพบุรี
   {
@@ -41,25 +133,32 @@ export const INITIAL_EXECUTIVES: Executive[] = [
     order: 1,
   },
   {
+    id: 'exec-po-2',
+    name: 'นายเจริญชัย สีตะระโส',
+    position: 'ผู้อำนวยการกลุ่มงานอำนวยการ',
+    category: 'provincial_office',
+    order: 2,
+  },
+  {
     id: 'exec-6',
     name: 'นายมนูญ โอมชล',
     position: 'ผู้อำนวยการกลุ่มงานศูนย์ดำรงธรรมจังหวัด',
     category: 'provincial_office',
-    order: 2,
+    order: 3,
   },
   {
     id: 'exec-7',
     name: 'นางสาววัลลภา เย็นระยับ',
     position: 'ผู้อำนวยการกลุ่มงานบริหารทรัพยากรบุคคล',
     category: 'provincial_office',
-    order: 3,
+    order: 4,
   },
   {
     id: 'exec-8',
     name: 'นายศรีศักดิ์ ภูวิบูลย์พาณิชย์',
     position: 'ผู้อำนวยการกลุ่มงานยุทธศาสตร์และข้อมูลเพื่อการพัฒนาจังหวัด',
     category: 'provincial_office',
-    order: 4,
+    order: 5,
   },
 ];
 
@@ -229,6 +328,7 @@ export const INITIAL_SETTINGS: DocumentSettings = {
   statusTimestampOption: 'auto',
   customStatusTime: '',
   printFooterText: 'พิมพ์จาก: ระบบนัดหมายงานผู้บริหารจังหวัดลพบุรี',
+  orientation: 'portrait',
 };
 
 export const COMMON_DRESS_CODES = [

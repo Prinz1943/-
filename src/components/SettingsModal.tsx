@@ -122,6 +122,50 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </label>
             </div>
 
+            {/* Page Orientation Setting (แนวตั้ง / แนวนอน) */}
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+              <div>
+                <div className="text-sm font-semibold text-slate-800">
+                  ทิศทางหน้ากระดาษและตาราง (A4 Orientation)
+                </div>
+                <div className="text-xs text-slate-500">
+                  เลือกทิศทางเอกสารสำหรับการแสดงผลบนหน้าจอ การพิมพ์ และการบันทึก PDF
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => onUpdateSettings({ ...settings, orientation: 'portrait' })}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-2 transition-all cursor-pointer ${
+                    (settings.orientation ?? 'portrait') === 'portrait'
+                      ? 'border-blue-600 bg-blue-50 text-blue-900 font-semibold ring-1 ring-blue-600'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="text-base">📄</span>
+                  <div className="text-left">
+                    <div className="font-bold">แนวตั้ง (Portrait)</div>
+                    <div className="text-[10px] text-slate-500">มาตรฐานตามที่ระบุ</div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onUpdateSettings({ ...settings, orientation: 'landscape' })}
+                  className={`px-3 py-2 rounded-xl text-xs font-medium border flex items-center gap-2 transition-all cursor-pointer ${
+                    settings.orientation === 'landscape'
+                      ? 'border-blue-600 bg-blue-50 text-blue-900 font-semibold ring-1 ring-blue-600'
+                      : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
+                  }`}
+                >
+                  <span className="text-base">📑</span>
+                  <div className="text-left">
+                    <div className="font-bold">แนวนอน (Landscape)</div>
+                    <div className="text-[10px] text-slate-500">แบบตารางกว้าง</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
             {/* Seal visibility */}
             <div className="flex items-center justify-between p-3.5 bg-slate-50 rounded-xl border border-slate-200">
               <div>

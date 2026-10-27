@@ -21,6 +21,7 @@ interface OfficialDocumentViewProps {
   onAddExecutive: (category: CategoryType) => void;
   onSwitchView?: (view: 'document' | 'cards') => void;
   onOpenSettings?: () => void;
+  onUpdateSettings?: (settings: DocumentSettings) => void;
 }
 
 export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
@@ -39,6 +40,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
   onAddExecutive,
   onSwitchView,
   onOpenSettings,
+  onUpdateSettings,
 }) => {
   const [copied, setCopied] = React.useState(false);
   const [isExportingPdf, setIsExportingPdf] = React.useState(false);
@@ -69,12 +71,14 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
     });
   }
 
+  const isPortrait = (settings.orientation ?? 'portrait') === 'portrait';
+
   const handleDownloadPdf = async () => {
     const ids = sectionsToRender.map((s) => `document-sheet-${s.id}`);
     const catName = category === 'provincial_office' ? 'สำนักงานจังหวัด' : (category === 'all' ? 'รวมทั้งหมด' : 'ผู้บริหารระดับสูง');
     const fileName = `วาระงาน${catName}_จังหวัดลพบุรี_${date}.pdf`;
     setDownloadNotice('กำลังสร้างไฟล์ PDF และดาวน์โหลดลงเครื่อง...');
-    const ok = await exportDocumentToPdf(ids, fileName, setIsExportingPdf);
+    const ok = await exportDocumentToPdf(ids, fileName, setIsExportingPdf, settings.orientation ?? 'portrait');
     if (ok) {
       setDownloadNotice(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
     } else {
@@ -128,8 +132,38 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
         <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
             <Eye className="w-3.5 h-3.5 shrink-0" />
-            <span>แบบฟอร์มทางการ (A4)</span>
+            <span>แบบฟอร์มทางการ ({isPortrait ? 'A4 แนวตั้ง' : 'A4 แนวนอน'})</span>
           </span>
+
+          {/* Orientation Toggle: 📄 แนวตั้ง / 📑 แนวนอน */}
+          {onUpdateSettings && (
+            <div className="inline-flex rounded-lg border border-slate-300 bg-slate-100 p-0.5 text-xs shrink-0">
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ ...settings, orientation: 'portrait' })}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  isPortrait
+                    ? 'bg-white text-blue-800 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                }`}
+                title="ปรับตารางเป็นแนวตั้ง (A4 Portrait)"
+              >
+                <span>📄 แนวตั้ง</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => onUpdateSettings({ ...settings, orientation: 'landscape' })}
+                className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md transition-all cursor-pointer ${
+                  !isPortrait
+                    ? 'bg-white text-blue-800 shadow-2xs font-bold'
+                    : 'text-slate-600 hover:text-slate-900 font-medium'
+                }`}
+                title="ปรับตารางเป็นแนวนอน (A4 Landscape)"
+              >
+                <span>📑 แนวนอน</span>
+              </button>
+            </div>
+          )}
           {isToday(date) ? (
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -263,7 +297,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
           <div
             key={section.id}
             id={`document-sheet-${section.id}`}
-            className={`official-document-sheet bg-white p-3.5 sm:p-8 md:p-12 shadow-md rounded-lg border border-slate-300 mx-auto max-w-6xl font-sarabun text-black ${
+            className={`official-document-sheet bg-white ${
+              isPortrait ? 'max-w-4xl p-3.5 sm:p-7 md:p-8' : 'max-w-6xl p-3.5 sm:p-8 md:p-12'
+            } shadow-md rounded-lg border border-slate-300 mx-auto font-sarabun text-black ${
               sectionIdx > 0 ? 'page-break-before print:mt-8' : ''
             }`}
             style={{ minHeight: '600px' }}
@@ -290,37 +326,37 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
             {/* Official Table Matching Images with smooth mobile horizontal scroll and min-width */}
             <div className="overflow-x-auto -mx-1 sm:mx-0 pb-2 scrollbar-thin">
-              <table className="official-table min-w-[820px] w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug">
+              <table className={`official-table ${isPortrait ? 'min-w-[650px]' : 'min-w-[820px]'} w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug`}>
                 <thead>
                   <tr className="bg-slate-50 print:bg-transparent">
-                    <th className="border-2 border-black px-2.5 py-2.5 font-bold text-center w-[21%] min-w-[170px] align-middle">
-                      <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
+                    <th className="border-2 border-black px-2 py-2 font-bold text-center w-[20.5%] min-w-[125px] align-middle">
+                      <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                         <span>ผู้บริหาร</span>
                         {isAdmin && (
                           <button
                             onClick={() => onAddExecutive(section.id)}
-                            className="no-print p-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 text-[11px] font-normal inline-flex items-center gap-0.5 transition-colors"
+                            className="no-print p-0.5 px-1 rounded bg-blue-100 hover:bg-blue-200 text-blue-800 text-[10px] sm:text-[11px] font-normal inline-flex items-center gap-0.5 transition-colors"
                             title="เพิ่มผู้บริหารใหม่ในตารางนี้"
                           >
-                            <UserPlus className="w-3 h-3" />
+                            <UserPlus className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
                             <span className="hidden sm:inline">เพิ่ม</span>
                           </button>
                         )}
                       </div>
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[8%] min-w-[65px] align-middle">
+                    <th className="border-2 border-black px-1 py-2 font-bold text-center w-[5.5%] min-w-[38px] max-w-[50px] align-middle text-[11.5px] sm:text-[12px] whitespace-nowrap">
                       เวลา
                     </th>
-                    <th className="border-2 border-black px-3 py-2.5 font-bold text-center w-[35%] min-w-[220px] align-middle">
+                    <th className="border-2 border-black px-2.5 py-2 font-bold text-center w-[38%] min-w-[170px] align-middle">
                       วาระงาน
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[16%] min-w-[130px] align-middle">
+                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[16%] min-w-[95px] align-middle">
                       สถานที่
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] min-w-[90px] align-middle">
+                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
                       การแต่งกาย
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] min-w-[90px] align-middle">
+                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
                       หน่วยงาน
                     </th>
                   </tr>
@@ -332,11 +368,11 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                       return (
                         <tr key={`empty-${exec.id}`} className="hover:bg-slate-50/50">
                           {/* Executive column */}
-                          <td className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white">
-                            <div className="font-semibold text-black text-[13.5px] sm:text-[14px] whitespace-nowrap leading-tight">{exec.name}</div>
-                            <div className="text-slate-800 text-[12px] leading-tight mt-0.5">{exec.position}</div>
+                          <td className="border-2 border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]">
+                            <div className="font-semibold text-black text-[13px] sm:text-[13.5px] whitespace-nowrap leading-tight">{exec.name}</div>
+                            <div className="text-slate-800 text-[11.5px] sm:text-[12px] leading-tight mt-0.5">{exec.position}</div>
                             {isAdmin && (
-                              <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
+                              <div className="no-print mt-2 pt-1 border-t border-slate-200 flex flex-wrap items-center gap-1">
                                 <button
                                   onClick={() => onEditExecutive(exec)}
                                   title="แก้ไขชื่อหรือตำแหน่งผู้บริหารท่านนี้"
@@ -369,8 +405,8 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
-                          <td className="border-2 border-black px-3 py-3 text-center text-slate-400 font-sarabun italic">
+                          <td className="border-2 border-black px-1 py-2 text-center text-slate-400 font-sarabun text-xs w-[5.5%] min-w-[38px] max-w-[50px] whitespace-nowrap">-</td>
+                          <td className="border-2 border-black px-2.5 py-2.5 text-center text-slate-400 font-sarabun italic">
                             - ไม่มีวาระงาน -
                             {isAdmin && (
                               <div className="no-print mt-1">
@@ -387,9 +423,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
-                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
-                          <td className="border-2 border-black px-2 py-3 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
                         </tr>
                       );
                     }
@@ -403,12 +439,12 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           {isFirstRow && (
                             <td
                               rowSpan={items.length}
-                              className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white"
+                              className="border-2 border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]"
                             >
-                              <div className="font-semibold text-black text-[13.5px] sm:text-[14px] whitespace-nowrap leading-tight">{exec.name}</div>
-                              <div className="text-slate-900 text-[12px] leading-tight mt-0.5">{exec.position}</div>
+                              <div className="font-semibold text-black text-[13px] sm:text-[13.5px] whitespace-nowrap leading-tight">{exec.name}</div>
+                              <div className="text-slate-900 text-[11.5px] sm:text-[12px] leading-tight mt-0.5">{exec.position}</div>
                               {isAdmin && (
-                                <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
+                                <div className="no-print mt-2 pt-1 border-t border-slate-200 flex flex-wrap items-center gap-1">
                                   <button
                                     onClick={() => onEditExecutive(exec)}
                                     title="แก้ไขชื่อหรือตำแหน่งผู้บริหารท่านนี้"
@@ -443,13 +479,13 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                             </td>
                           )}
 
-                          {/* Time */}
-                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun font-normal whitespace-nowrap">
+                          {/* Time (บีบช่องเวลาแน่นกระชับพิเศษ) */}
+                          <td className="border-2 border-black px-1 py-2 text-center align-top font-sarabun font-semibold text-[11.5px] sm:text-[12px] whitespace-nowrap leading-tight tracking-tighter w-[5.5%] min-w-[38px] max-w-[50px]">
                             {formatTimeDisplay(item.time, settings.useThaiNumerals)}
                           </td>
 
                           {/* Agenda */}
-                          <td className="border-2 border-black px-3 py-2.5 align-top font-sarabun text-left leading-relaxed">
+                          <td className="border-2 border-black px-2.5 py-2 align-top font-sarabun text-left leading-relaxed">
                             <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
                               {item.agenda}
                             </div>
@@ -497,22 +533,22 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           </td>
 
                           {/* Location */}
-                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
-                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.location}
                             </div>
                           </td>
 
                           {/* Dress Code */}
-                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
-                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.dressCode}
                             </div>
                           </td>
 
                           {/* Department */}
-                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
-                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.department}
                             </div>
                           </td>

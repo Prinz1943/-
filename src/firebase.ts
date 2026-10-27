@@ -94,6 +94,19 @@ export async function seedInitialDataIfEmpty(): Promise<void> {
         batch.set(doc(db, 'executives', exec.id), exec);
       }
       await batch.commit();
+    } else {
+      // Ensure newly added initial executives are present in existing Firestore database
+      const existingIds = new Set<string>();
+      execSnap.forEach((d) => existingIds.add(d.id));
+      const missing = INITIAL_EXECUTIVES.filter((e) => !existingIds.has(e.id));
+      if (missing.length > 0) {
+        console.log(`Adding ${missing.length} missing initial executives to Firestore...`);
+        const batch = writeBatch(db);
+        for (const exec of missing) {
+          batch.set(doc(db, 'executives', exec.id), exec);
+        }
+        await batch.commit();
+      }
     }
 
     const schedSnap = await getDocs(collection(db, 'schedules'));

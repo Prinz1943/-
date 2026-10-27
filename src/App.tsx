@@ -85,7 +85,16 @@ export default function App() {
   const [executives, setExecutives] = useState<Executive[]>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_EXECS);
-      return saved ? JSON.parse(saved) : INITIAL_EXECUTIVES;
+      if (saved) {
+        const parsed: Executive[] = JSON.parse(saved);
+        const existingIds = new Set(parsed.map((e) => e.id));
+        const missing = INITIAL_EXECUTIVES.filter((e) => !existingIds.has(e.id));
+        if (missing.length > 0) {
+          return [...parsed, ...missing].sort((a, b) => a.order - b.order);
+        }
+        return parsed;
+      }
+      return INITIAL_EXECUTIVES;
     } catch {
       return INITIAL_EXECUTIVES;
     }
@@ -480,8 +489,12 @@ export default function App() {
           ? 'รวมทั้งหมด'
           : 'ผู้บริหารระดับสูง';
       const fileName = `วาระงาน${catName}_จังหวัดลพบุรี_${selectedDate}.pdf`;
-
-      const success = await exportDocumentToPdf(elementIds, fileName, (status) => setIsExportingPdf(status));
+      const success = await exportDocumentToPdf(
+        elementIds,
+        fileName,
+        (status) => setIsExportingPdf(status),
+        settings.orientation ?? 'portrait'
+      );
       if (success) {
         setDownloadNotification(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
       } else {
@@ -819,6 +832,7 @@ export default function App() {
             onAddExecutive={handleOpenAddExecutive}
             onSwitchView={(mode) => setViewMode(mode)}
             onOpenSettings={() => setIsSettingsModalOpen(true)}
+            onUpdateSettings={handleUpdateSettings}
           />
         </div>
         {viewMode === 'cards' && (

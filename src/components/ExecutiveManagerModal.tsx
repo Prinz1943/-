@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Executive, CategoryType } from '../types/schedule';
-import { X, Plus, Edit2, Trash2, Users, ArrowUp, ArrowDown } from 'lucide-react';
+import { PRESET_EXECUTIVES, COMMON_EXECUTIVE_POSITIONS } from '../data/initialData';
+import { X, Plus, Edit2, Trash2, Users, ArrowUp, ArrowDown, Sparkles } from 'lucide-react';
 
 interface ExecutiveManagerModalProps {
   isOpen: boolean;
@@ -212,31 +213,76 @@ export const ExecutiveManagerModal: React.FC<ExecutiveManagerModalProps> = ({
           </div>
 
           {/* Add New Executive Form */}
-          <form onSubmit={handleAdd} className="pt-4 border-t border-slate-200">
-            <h4 className="text-xs font-semibold text-slate-700 mb-2">เพิ่มผู้บริหารใหม่ในหมวดนี้</h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2">
+          <form onSubmit={handleAdd} className="pt-4 border-t border-slate-200 space-y-3">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                เพิ่มผู้บริหารใหม่ในหมวดนี้
+              </h4>
+              <span className="text-[11px] text-blue-600">เลือกจากรายชื่อด่วนด้านล่างได้</span>
+            </div>
+
+            {/* Quick chips from presets */}
+            <div className="flex flex-wrap gap-1">
+              {PRESET_EXECUTIVES.filter((p) => p.category === activeTab).map((p, idx) => (
+                <button
+                  type="button"
+                  key={idx}
+                  onClick={() => {
+                    setNewName(p.name);
+                    setNewPosition(p.position);
+                  }}
+                  className="text-[11px] px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors cursor-pointer"
+                  title={`คลิกเพื่อเลือก: ${p.name} (${p.position})`}
+                >
+                  + {p.name}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <input
                 type="text"
+                list="mgr-preset-names"
                 value={newName}
-                onChange={(e) => setNewName(e.target.value)}
-                placeholder="ชื่อ-สกุล (เช่น นายสมหมาย ใจดี)"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setNewName(val);
+                  const matched = PRESET_EXECUTIVES.find((p) => p.name === val);
+                  if (matched) setNewPosition(matched.position);
+                }}
+                placeholder="ชื่อ-นามสกุล (เช่น นายพิษณุ ประภาธนานันท์)"
                 required
                 className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-1 focus:ring-blue-500"
               />
+              <datalist id="mgr-preset-names">
+                {PRESET_EXECUTIVES.filter((p) => p.category === activeTab).map((p, idx) => (
+                  <option key={idx} value={p.name}>
+                    {p.position}
+                  </option>
+                ))}
+              </datalist>
+
               <input
                 type="text"
+                list="mgr-preset-positions"
                 value={newPosition}
                 onChange={(e) => setNewPosition(e.target.value)}
-                placeholder="ตำแหน่ง (เช่น รองผู้ว่าราชการจังหวัดลพบุรี)"
+                placeholder="ตำแหน่ง (เช่น ปลัดจังหวัดลพบุรี)"
                 required
                 className="text-xs bg-slate-50 border border-slate-200 rounded-lg p-2 focus:ring-1 focus:ring-blue-500"
               />
+              <datalist id="mgr-preset-positions">
+                {COMMON_EXECUTIVE_POSITIONS.map((pos, idx) => (
+                  <option key={idx} value={pos} />
+                ))}
+              </datalist>
             </div>
             <button
               type="submit"
-              className="w-full py-2 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 inline-flex items-center justify-center gap-1.5"
+              className="w-full py-2 text-xs font-medium rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 inline-flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              <Plus className="w-3.5 h-3.5" /> เพิ่มผู้บริหาร
+              <Plus className="w-3.5 h-3.5" /> บันทึกเพิ่มผู้บริหาร
             </button>
           </form>
         </div>

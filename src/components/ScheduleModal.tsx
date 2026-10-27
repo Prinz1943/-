@@ -144,6 +144,24 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                     ))}
                 </optgroup>
               </select>
+
+              {/* Quick Clickable Executive Chips */}
+              <div className="flex flex-wrap gap-1 mt-1.5 max-h-20 overflow-y-auto">
+                {executives.map((exec) => (
+                  <button
+                    type="button"
+                    key={exec.id}
+                    onClick={() => setExecutiveId(exec.id)}
+                    className={`text-[11px] px-2 py-0.5 rounded-md border transition-colors cursor-pointer ${
+                      executiveId === exec.id
+                        ? 'bg-blue-600 text-white border-blue-600 font-semibold shadow-2xs'
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    {exec.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div>

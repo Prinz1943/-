@@ -73,23 +73,26 @@ function triggerFileDownload(blob: Blob, fileName: string) {
 export async function exportDocumentToPdf(
   elementIds: string[],
   fileName: string = 'ระบบนัดหมายงานผู้บริหารจังหวัดลพบุรี.pdf',
-  onProgress?: (status: boolean) => void
+  onProgress?: (status: boolean) => void,
+  orientation: 'portrait' | 'landscape' = 'portrait'
 ): Promise<boolean> {
   try {
     if (onProgress) onProgress(true);
 
+    const isPortrait = orientation === 'portrait';
+
     const pdf = new jsPDF({
-      orientation: 'landscape',
+      orientation: isPortrait ? 'portrait' : 'landscape',
       unit: 'mm',
       format: 'a4',
       compress: true,
     });
 
-    const pageWidth = 297; // A4 landscape width in mm
-    const pageHeight = 210; // A4 landscape height in mm
+    const pageWidth = isPortrait ? 210 : 297; // A4 width in mm
+    const pageHeight = isPortrait ? 297 : 210; // A4 height in mm
     const margin = 8; // 8mm margin
-    const targetWidth = pageWidth - margin * 2; // 281mm
-    const targetHeight = pageHeight - margin * 2; // 194mm
+    const targetWidth = pageWidth - margin * 2;
+    const targetHeight = pageHeight - margin * 2;
 
     let pagesRendered = 0;
 
@@ -116,9 +119,11 @@ export async function exportDocumentToPdf(
       const originalBoxShadow = el.style.boxShadow;
       const originalBorder = el.style.border;
 
-      el.style.width = '1200px';
-      el.style.maxWidth = '1200px';
-      el.style.minWidth = '1200px';
+      const captureWidth = isPortrait ? '850px' : '1200px';
+
+      el.style.width = captureWidth;
+      el.style.maxWidth = captureWidth;
+      el.style.minWidth = captureWidth;
       el.style.boxShadow = 'none';
       el.style.border = 'none';
 
@@ -131,7 +136,7 @@ export async function exportDocumentToPdf(
         allowTaint: false, // Must be false so toDataURL never throws SecurityError
         backgroundColor: '#FFFFFF',
         logging: false,
-        windowWidth: 1280,
+        windowWidth: isPortrait ? 900 : 1280,
       });
 
       // Restore images
@@ -153,7 +158,7 @@ export async function exportDocumentToPdf(
       const imgData = canvas.toDataURL('image/jpeg', 0.95);
 
       if (pagesRendered > 0) {
-        pdf.addPage('a4', 'landscape');
+        pdf.addPage('a4', isPortrait ? 'portrait' : 'landscape');
       }
 
       // Calculate aspect ratio fit to A4 landscape
