@@ -290,11 +290,11 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
             {/* Official Table Matching Images with smooth mobile horizontal scroll and min-width */}
             <div className="overflow-x-auto -mx-1 sm:mx-0 pb-2 scrollbar-thin">
-              <table className="official-table min-w-[760px] w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug">
+              <table className="official-table min-w-[820px] w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug">
                 <thead>
                   <tr className="bg-slate-50 print:bg-transparent">
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[18%] align-middle">
-                      <div className="flex items-center justify-center gap-1.5">
+                    <th className="border-2 border-black px-2.5 py-2.5 font-bold text-center w-[21%] min-w-[170px] align-middle">
+                      <div className="flex items-center justify-center gap-1.5 whitespace-nowrap">
                         <span>ผู้บริหาร</span>
                         {isAdmin && (
                           <button
@@ -308,19 +308,19 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                         )}
                       </div>
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[9%] align-middle">
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[8%] min-w-[65px] align-middle">
                       เวลา
                     </th>
-                    <th className="border-2 border-black px-3 py-2.5 font-bold text-center w-[36%] align-middle">
+                    <th className="border-2 border-black px-3 py-2.5 font-bold text-center w-[35%] min-w-[220px] align-middle">
                       วาระงาน
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[17%] align-middle">
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[16%] min-w-[130px] align-middle">
                       สถานที่
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] align-middle">
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] min-w-[90px] align-middle">
                       การแต่งกาย
                     </th>
-                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] align-middle">
+                    <th className="border-2 border-black px-2 py-2.5 font-bold text-center w-[10%] min-w-[90px] align-middle">
                       หน่วยงาน
                     </th>
                   </tr>
@@ -333,7 +333,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                         <tr key={`empty-${exec.id}`} className="hover:bg-slate-50/50">
                           {/* Executive column */}
                           <td className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white">
-                            <div className="font-semibold text-black text-[13.5px]">{exec.name}</div>
+                            <div className="font-semibold text-black text-[13.5px] sm:text-[14px] whitespace-nowrap leading-tight">{exec.name}</div>
                             <div className="text-slate-800 text-[12px] leading-tight mt-0.5">{exec.position}</div>
                             {isAdmin && (
                               <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
@@ -405,7 +405,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               rowSpan={items.length}
                               className="border-2 border-black px-2.5 py-3 align-top font-sarabun text-left bg-white"
                             >
-                              <div className="font-semibold text-black text-[13.5px]">{exec.name}</div>
+                              <div className="font-semibold text-black text-[13.5px] sm:text-[14px] whitespace-nowrap leading-tight">{exec.name}</div>
                               <div className="text-slate-900 text-[12px] leading-tight mt-0.5">{exec.position}</div>
                               {isAdmin && (
                                 <div className="no-print mt-2 pt-1.5 border-t border-slate-200 flex flex-wrap items-center gap-1">
@@ -449,8 +449,10 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           </td>
 
                           {/* Agenda */}
-                          <td className="border-2 border-black px-3 py-3 align-top font-sarabun text-left leading-relaxed">
-                            <span>{item.agenda}</span>
+                          <td className="border-2 border-black px-3 py-2.5 align-top font-sarabun text-left leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                              {item.agenda}
+                            </div>
                             {/* Action buttons for editing/deleting */}
                             {isAdmin ? (
                               <div className="no-print mt-2 flex flex-wrap items-center gap-1.5 text-xs font-sans">
@@ -495,18 +497,24 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           </td>
 
                           {/* Location */}
-                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
-                            {item.location}
+                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                              {item.location}
+                            </div>
                           </td>
 
                           {/* Dress Code */}
-                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
-                            {item.dressCode}
+                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                              {item.dressCode}
+                            </div>
                           </td>
 
                           {/* Department */}
-                          <td className="border-2 border-black px-2 py-3 text-center align-top font-sarabun leading-relaxed">
-                            {item.department}
+                          <td className="border-2 border-black px-2 py-2.5 text-center align-top font-sarabun leading-relaxed">
+                            <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
+                              {item.department}
+                            </div>
                           </td>
                         </tr>
                       );

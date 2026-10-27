@@ -222,33 +222,39 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
 
           {/* Agenda */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <FileText className="w-4 h-4 text-blue-600" />
-              วาระงาน / กิจกรรม / การประชุม <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <FileText className="w-4 h-4 text-blue-600" />
+                วาระงาน / กิจกรรม / การประชุม <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[11px] text-emerald-600 font-medium">กด Enter เพื่อตัดคำ/ขึ้นบรรทัดใหม่ได้อิสระ</span>
+            </div>
             <textarea
               rows={3}
               value={agenda}
               onChange={(e) => setAgenda(e.target.value)}
               required
               placeholder="เช่น ประธานการประชุมคณะกรรมการอำนวยการจัดกิจกรรม..."
-              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
             />
           </div>
 
           {/* Location */}
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-              <MapPin className="w-4 h-4 text-red-500" />
-              สถานที่ <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-red-500" />
+                สถานที่ <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[11px] text-slate-400">กด Enter เพื่อขึ้นบรรทัดใหม่ได้</span>
+            </div>
+            <textarea
+              rows={2}
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               required
-              placeholder="เช่น ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี"
-              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              placeholder="เช่น ห้องประชุมทานตะวัน ชั้น ๕&#10;ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี"
+              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
             />
             <div className="flex flex-wrap gap-1.5 mt-2">
               {COMMON_LOCATIONS.slice(0, 3).map((loc) => (
@@ -267,16 +273,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
           {/* Dress Code & Department */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Shirt className="w-4 h-4 text-amber-500" />
-                การแต่งกาย
-              </label>
-              <input
-                type="text"
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Shirt className="w-4 h-4 text-amber-500" />
+                  การแต่งกาย
+                </label>
+                <span className="text-[10px] text-slate-400">กด Enter ตัดคำได้</span>
+              </div>
+              <textarea
+                rows={2}
                 value={dressCode}
                 onChange={(e) => setDressCode(e.target.value)}
-                placeholder="เช่น ชุดสุภาพไว้ทุกข์"
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                placeholder="เช่น ชุดผ้าไทย โทนสี&#10;ม่วง / สีเหลือง"
+                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
               />
               <div className="flex flex-wrap gap-1 mt-1.5">
                 {COMMON_DRESS_CODES.slice(0, 3).map((dc) => (
@@ -293,16 +302,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5">
-                <Building2 className="w-4 h-4 text-indigo-500" />
-                หน่วยงานผู้รับผิดชอบ / ประสานงาน
-              </label>
-              <input
-                type="text"
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <Building2 className="w-4 h-4 text-indigo-500" />
+                  หน่วยงานผู้รับผิดชอบ
+                </label>
+                <span className="text-[10px] text-slate-400">กด Enter ตัดคำได้</span>
+              </div>
+              <textarea
+                rows={2}
                 value={department}
                 onChange={(e) => setDepartment(e.target.value)}
-                placeholder="เช่น สำนักงานจังหวัดลพบุรี (กลุ่มงานอำนวยการ)"
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                placeholder="เช่น สำนักงานจังหวัดลพบุรี&#10;(กลุ่มงานอำนวยการ)"
+                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
               />
               <div className="flex flex-wrap gap-1 mt-1.5">
                 {COMMON_DEPARTMENTS.slice(0, 2).map((dept) => (
