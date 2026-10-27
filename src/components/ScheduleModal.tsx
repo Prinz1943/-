@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { ScheduleItem, Executive, CategoryType } from '../types/schedule';
 import { COMMON_DRESS_CODES, COMMON_LOCATIONS, COMMON_DEPARTMENTS } from '../data/initialData';
 import { getCurrentThaiTime, getCurrentExactThaiTime, getTodayString } from '../utils/thaiDate';
+import { SearchableCombobox } from './SearchableCombobox';
 import {
   X,
   Clock,
@@ -114,29 +115,26 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
     }
   }, [editingItem, isOpen, defaultDate, defaultCategory, executives]);
 
-  // Merge remembered values from localStorage + schedules history + standard presets
-  const rememberedLocationsList = useMemo(() => {
+  // Merge unique custom items from localStorage + schedules history
+  const allCustomLocations = useMemo(() => {
     const fromSchedules = schedules
       .map((s) => s.location?.trim())
       .filter((l): l is string => Boolean(l && l.length > 0));
-    const combined = Array.from(new Set([...customLocations, ...fromSchedules, ...COMMON_LOCATIONS]));
-    return combined.slice(0, 15);
+    return Array.from(new Set([...customLocations, ...fromSchedules]));
   }, [customLocations, schedules]);
 
-  const rememberedDressList = useMemo(() => {
+  const allCustomDress = useMemo(() => {
     const fromSchedules = schedules
       .map((s) => s.dressCode?.trim())
       .filter((d): d is string => Boolean(d && d.length > 0));
-    const combined = Array.from(new Set([...customDressCodes, ...fromSchedules, ...COMMON_DRESS_CODES]));
-    return combined.slice(0, 15);
+    return Array.from(new Set([...customDressCodes, ...fromSchedules]));
   }, [customDressCodes, schedules]);
 
-  const rememberedDeptsList = useMemo(() => {
+  const allCustomDepts = useMemo(() => {
     const fromSchedules = schedules
       .map((s) => s.department?.trim())
       .filter((d): d is string => Boolean(d && d.length > 0));
-    const combined = Array.from(new Set([...customDepartments, ...fromSchedules, ...COMMON_DEPARTMENTS]));
-    return combined.slice(0, 15);
+    return Array.from(new Set([...customDepartments, ...fromSchedules]));
   }, [customDepartments, schedules]);
 
   // Persist newly entered items into localStorage so they are remembered forever
@@ -473,117 +471,83 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             />
           </div>
 
-          {/* Location with Remembered / Historical values */}
-          <div>
-            <div className="flex items-center justify-between mb-1.5">
-              <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                <MapPin className="w-4 h-4 text-red-500" />
-                สถานที่ <span className="text-red-500">*</span>
-              </label>
-              <div className="flex items-center gap-2">
-                <span className="text-[11px] text-slate-400">กด Enter ขึ้นบรรทัดใหม่ได้</span>
-                <span className="text-[11px] text-blue-600 font-medium flex items-center gap-1">
-                  <History className="w-3 h-3" />
-                  คลิกที่เคยกรอกเพื่อเลือกได้
-                </span>
-              </div>
-            </div>
-            <textarea
-              rows={2}
-              value={location}
-              onChange={(e) => {
-                setLocation(e.target.value);
-                setValidationError(null);
-              }}
-              required
-              placeholder="เช่น ห้องประชุม สนง.พระพุทธศาสนาจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี"
-              className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
-            />
-            {/* Remembered / Auto-saved chips */}
-            <div className="flex flex-wrap items-center gap-1.5 mt-2">
-              <span className="text-[10.5px] text-slate-500 font-medium flex items-center gap-1 shrink-0">
-                <Sparkles className="w-3 h-3 text-amber-500" />
-                สถานที่ที่เคยกรอก/แนะนำ:
-              </span>
-              {rememberedLocationsList.map((loc, idx) => (
-                <button
-                  type="button"
-                  key={`loc-${idx}-${loc.slice(0, 10)}`}
-                  onClick={() => setLocation(loc)}
-                  title={loc}
-                  className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 text-slate-700 truncate max-w-[280px] transition-colors border border-slate-200 cursor-pointer text-left"
-                >
-                  {loc.length > 32 ? `${loc.slice(0, 32)}...` : loc}
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* Location with Searchable Combobox matching image_fae5a27b.png */}
+          <SearchableCombobox
+            id="location"
+            label="สถานที่"
+            required
+            icon={<MapPin className="w-4 h-4 text-red-500" />}
+            value={location}
+            onChange={(val) => {
+              setLocation(val);
+              setValidationError(null);
+            }}
+            placeholder="พิมพ์หรือเลือกสถานที่..."
+            customOptions={allCustomLocations}
+            presetOptions={COMMON_LOCATIONS}
+            onDeleteCustomOption={(opt) => {
+              setCustomLocations((prev) => {
+                const next = prev.filter((p) => p !== opt);
+                try {
+                  localStorage.setItem(STORAGE_KEY_CUSTOM_LOCATIONS, JSON.stringify(next));
+                } catch {
+                  // ignore
+                }
+                return next;
+              });
+            }}
+            helperText="พิมพ์หรือเลือกจากรายการ"
+          />
 
-          {/* Dress Code & Department with Remembered / Historical values */}
+          {/* Dress Code & Department with Searchable Combobox */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Dress code */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Shirt className="w-4 h-4 text-amber-500" />
-                  การแต่งกาย / ชุด
-                </label>
-                <span className="text-[10px] text-slate-400">กด Enter ตัดคำได้</span>
-              </div>
-              <textarea
-                rows={2}
-                value={dressCode}
-                onChange={(e) => setDressCode(e.target.value)}
-                placeholder="เช่น ชุดผ้าไทย โทนสีม่วง / สีเหลือง"
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
-              />
-              <div className="flex flex-wrap items-center gap-1 mt-2">
-                <span className="text-[10px] text-slate-400 shrink-0">ชุดที่เคยกรอก:</span>
-                {rememberedDressList.map((dc, idx) => (
-                  <button
-                    type="button"
-                    key={`dress-${idx}-${dc.slice(0, 8)}`}
-                    onClick={() => setDressCode(dc)}
-                    title={dc}
-                    className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 text-slate-700 transition-colors border border-slate-200 cursor-pointer"
-                  >
-                    {dc.length > 25 ? `${dc.slice(0, 25)}...` : dc}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <SearchableCombobox
+              id="dressCode"
+              label="การแต่งกาย / ชุด"
+              icon={<Shirt className="w-4 h-4 text-amber-500" />}
+              value={dressCode}
+              onChange={(val) => setDressCode(val)}
+              placeholder="พิมพ์หรือเลือกการแต่งกาย / ชุด..."
+              customOptions={allCustomDress}
+              presetOptions={COMMON_DRESS_CODES}
+              onDeleteCustomOption={(opt) => {
+                setCustomDressCodes((prev) => {
+                  const next = prev.filter((p) => p !== opt);
+                  try {
+                    localStorage.setItem(STORAGE_KEY_CUSTOM_DRESS, JSON.stringify(next));
+                  } catch {
+                    // ignore
+                  }
+                  return next;
+                });
+              }}
+              helperText="พิมพ์หรือเลือกจากรายการ"
+            />
 
-            {/* Department */}
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
-                  <Building2 className="w-4 h-4 text-indigo-500" />
-                  หน่วยงานผู้รับผิดชอบ
-                </label>
-                <span className="text-[10px] text-slate-400">กด Enter ตัดคำได้</span>
-              </div>
-              <textarea
-                rows={2}
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="เช่น สนง.พระพุทธศาสนาจังหวัดลพบุรี"
-                className="w-full text-sm bg-slate-50 border border-slate-200 rounded-lg p-2.5 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 font-sarabun whitespace-pre-line"
-              />
-              <div className="flex flex-wrap items-center gap-1 mt-2">
-                <span className="text-[10px] text-slate-400 shrink-0">หน่วยงานที่เคยกรอก:</span>
-                {rememberedDeptsList.map((dept, idx) => (
-                  <button
-                    type="button"
-                    key={`dept-${idx}-${dept.slice(0, 8)}`}
-                    onClick={() => setDepartment(dept)}
-                    title={dept}
-                    className="text-[11px] px-2 py-0.5 rounded-md bg-slate-100 hover:bg-indigo-50 hover:text-indigo-800 hover:border-indigo-300 text-slate-700 truncate max-w-[190px] transition-colors border border-slate-200 cursor-pointer"
-                  >
-                    {dept.length > 25 ? `${dept.slice(0, 25)}...` : dept}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {/* Department matching image_fae5a27b.png */}
+            <SearchableCombobox
+              id="department"
+              label="หน่วยงานผู้รับผิดชอบ"
+              icon={<Building2 className="w-4 h-4 text-indigo-500" />}
+              value={department}
+              onChange={(val) => setDepartment(val)}
+              placeholder="พิมพ์หรือเลือกหน่วยงาน..."
+              customOptions={allCustomDepts}
+              presetOptions={COMMON_DEPARTMENTS}
+              onDeleteCustomOption={(opt) => {
+                setCustomDepartments((prev) => {
+                  const next = prev.filter((p) => p !== opt);
+                  try {
+                    localStorage.setItem(STORAGE_KEY_CUSTOM_DEPTS, JSON.stringify(next));
+                  } catch {
+                    // ignore
+                  }
+                  return next;
+                });
+              }}
+              helperText="พิมพ์หรือเลือกจากรายการ"
+            />
           </div>
 
           {/* Form Actions with Add Next and Clear buttons */}
