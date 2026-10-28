@@ -476,15 +476,18 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             id="location"
             label="สถานที่"
             required
+            multiline={true}
+            rows={2}
             icon={<MapPin className="w-4 h-4 text-red-500" />}
             value={location}
             onChange={(val) => {
               setLocation(val);
               setValidationError(null);
             }}
-            placeholder="พิมพ์หรือเลือกสถานที่..."
+            placeholder="เช่น ห้องประชุมทานตะวัน ชั้น ๕&#10;ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี"
             customOptions={allCustomLocations}
             presetOptions={COMMON_LOCATIONS}
+            placement="auto"
             onDeleteCustomOption={(opt) => {
               setCustomLocations((prev) => {
                 const next = prev.filter((p) => p !== opt);
@@ -496,7 +499,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 return next;
               });
             }}
-            helperText="พิมพ์หรือเลือกจากรายการ"
+            helperText="กด Enter ตัดคำ/ขึ้นบรรทัดใหม่ได้อิสระ"
           />
 
           {/* Dress Code & Department with Searchable Combobox */}
@@ -505,10 +508,12 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
             <SearchableCombobox
               id="dressCode"
               label="การแต่งกาย / ชุด"
+              multiline={true}
+              rows={2}
               icon={<Shirt className="w-4 h-4 text-amber-500" />}
               value={dressCode}
               onChange={(val) => setDressCode(val)}
-              placeholder="พิมพ์หรือเลือกการแต่งกาย / ชุด..."
+              placeholder="เช่น ชุดผ้าไทย โทนสีม่วง&#10;/ สีเหลือง"
               customOptions={allCustomDress}
               presetOptions={COMMON_DRESS_CODES}
               placement="top"
@@ -523,17 +528,19 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                   return next;
                 });
               }}
-              helperText="พิมพ์หรือเลือกจากรายการ"
+              helperText="กด Enter ตัดคำได้อิสระ"
             />
 
             {/* Department matching image_fae5a27b.png */}
             <SearchableCombobox
               id="department"
               label="หน่วยงานผู้รับผิดชอบ"
+              multiline={true}
+              rows={2}
               icon={<Building2 className="w-4 h-4 text-indigo-500" />}
               value={department}
               onChange={(val) => setDepartment(val)}
-              placeholder="พิมพ์หรือเลือกหน่วยงาน..."
+              placeholder="เช่น สนง.พระพุทธศาสนาจังหวัดลพบุรี&#10;อ.เมืองลพบุรี จ.ลพบุรี"
               customOptions={allCustomDepts}
               presetOptions={COMMON_DEPARTMENTS}
               placement="top"
@@ -548,7 +555,7 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                   return next;
                 });
               }}
-              helperText="พิมพ์หรือเลือกจากรายการ"
+              helperText="กด Enter ตัดคำได้อิสระ"
             />
           </div>
 

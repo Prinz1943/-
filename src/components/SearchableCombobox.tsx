@@ -14,6 +14,8 @@ interface SearchableComboboxProps {
   onDeleteCustomOption?: (option: string) => void;
   helperText?: string;
   placement?: 'bottom' | 'top' | 'auto';
+  multiline?: boolean; // รองรับการกด Enter ตัดคำ/ขึ้นบรรทัดใหม่ได้
+  rows?: number;
 }
 
 export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
@@ -29,11 +31,14 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
   onDeleteCustomOption,
   helperText,
   placement = 'auto',
+  multiline = false,
+  rows = 2,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [openUpward, setOpenUpward] = useState(placement === 'top');
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -69,8 +74,8 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
     }
   }, [isOpen, placement]);
 
-  // Filter options based on typed input
-  const query = value.trim().toLowerCase();
+  // Filter options based on typed input (ignoring line breaks for matching)
+  const query = value.trim().toLowerCase().replace(/\s+/g, ' ');
 
   const filteredCustom = useMemo(() => {
     if (!query) return customOptions;
@@ -98,8 +103,11 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
   const handleClear = (e: React.MouseEvent) => {
     e.stopPropagation();
     onChange('');
-    inputRef.current?.focus();
-    setIsOpen(true);
+    if (multiline) {
+      textareaRef.current?.focus();
+    } else {
+      inputRef.current?.focus();
+    }
   };
 
   return (
@@ -111,13 +119,13 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
             <span>{label}</span>
             {required && <span className="text-red-500 font-bold">*</span>}
           </label>
-          {helperText && <span className="text-[11px] text-slate-400 font-normal">{helperText}</span>}
+          {helperText && <span className="text-[11px] text-emerald-600 font-medium">{helperText}</span>}
         </div>
       )}
 
-      {/* Input container matching image_fae5a27b.png */}
+      {/* Input / Textarea container */}
       <div
-        className={`relative flex items-center bg-white border rounded-lg transition-all shadow-2xs ${
+        className={`relative flex ${multiline ? 'items-start' : 'items-center'} bg-white border rounded-lg transition-all shadow-2xs ${
           isOpen
             ? 'border-blue-600 ring-2 ring-blue-500/20'
             : 'border-slate-300 hover:border-slate-400 focus-within:border-blue-600 focus-within:ring-2 focus-within:ring-blue-500/20'
@@ -125,53 +133,86 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
       >
         {/* Left Icon */}
         {icon && (
-          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none shrink-0 flex items-center">
+          <div
+            className={`absolute left-3 ${
+              multiline ? 'top-2.5' : 'top-1/2 -translate-y-1/2'
+            } text-slate-500 pointer-events-none shrink-0 flex items-center`}
+          >
             {icon}
           </div>
         )}
 
-        {/* Text Input for Typing freely */}
-        <input
-          ref={inputRef}
-          id={id}
-          type="text"
-          value={value}
-          onChange={(e) => {
-            onChange(e.target.value);
-            if (!isOpen) setIsOpen(true);
-          }}
-          onFocus={() => setIsOpen(true)}
-          placeholder={placeholder}
-          required={required}
-          className={`w-full text-sm bg-transparent py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none ${
-            icon ? 'pl-9' : 'pl-3'
-          } ${value ? 'pr-16' : 'pr-9'}`}
-        />
-
-        {/* Clear Button */}
-        {value && (
-          <button
-            type="button"
-            onClick={handleClear}
-            className="absolute right-8 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-            title="ล้างข้อความ"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
+        {/* Multiline Textarea (รองรับการตัดคำ/ขึ้นบรรทัดใหม่ด้วยปุ่ม Enter) */}
+        {multiline ? (
+          <textarea
+            ref={textareaRef}
+            id={id}
+            rows={rows}
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+            }}
+            placeholder={placeholder}
+            required={required}
+            className={`w-full text-sm bg-transparent py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none font-sarabun whitespace-pre-line resize-y min-h-[58px] ${
+              icon ? 'pl-9' : 'pl-3'
+            } ${value ? 'pr-16' : 'pr-9'}`}
+          />
+        ) : (
+          /* Single Line Input */
+          <input
+            ref={inputRef}
+            id={id}
+            type="text"
+            value={value}
+            onChange={(e) => {
+              onChange(e.target.value);
+              if (!isOpen) setIsOpen(true);
+            }}
+            onFocus={() => setIsOpen(true)}
+            placeholder={placeholder}
+            required={required}
+            className={`w-full text-sm bg-transparent py-2.5 text-slate-900 placeholder:text-slate-400 focus:outline-none font-sarabun ${
+              icon ? 'pl-9' : 'pl-3'
+            } ${value ? 'pr-16' : 'pr-9'}`}
+          />
         )}
 
-        {/* Dropdown Toggle Chevron Button */}
-        <button
-          type="button"
-          onClick={() => {
-            setIsOpen((prev) => !prev);
-            inputRef.current?.focus();
-          }}
-          className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-blue-600 rounded-md hover:bg-slate-100 transition-colors cursor-pointer"
-          title={isOpen ? 'ปิดรายการตัวเลือก' : 'เปิดรายการตัวเลือก'}
+        {/* Right Action Buttons: Clear and Dropdown Toggle */}
+        <div
+          className={`absolute right-1.5 ${
+            multiline ? 'top-1.5' : 'top-1/2 -translate-y-1/2'
+          } flex items-center gap-0.5 bg-white/95 rounded-md p-0.5`}
         >
-          {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+          {value && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-1 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              title="ล้างข้อความ"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => {
+              setIsOpen((prev) => !prev);
+              if (multiline) {
+                textareaRef.current?.focus();
+              } else {
+                inputRef.current?.focus();
+              }
+            }}
+            className={`p-1 rounded-md transition-colors cursor-pointer ${
+              isOpen ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-slate-100'
+            }`}
+            title={isOpen ? 'ปิดรายการตัวเลือก' : 'เลือกจากรายการ'}
+          >
+            {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+        </div>
       </div>
 
       {/* Floating Dropdown Menu with Smart Upward/Downward placement */}
@@ -190,7 +231,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
                 className="w-full text-left px-3 py-2 text-xs sm:text-sm font-medium text-blue-700 hover:bg-blue-100/70 rounded-lg flex items-center justify-between transition-colors cursor-pointer"
               >
                 <span className="truncate">
-                  ➕ ใช้ข้อความใหม่: <strong className="text-slate-900 font-semibold">"{value}"</strong>
+                  ➕ ใช้ข้อความใหม่: <strong className="text-slate-900 font-semibold">"{value.replace(/\n/g, ' ')}"</strong>
                 </span>
                 <span className="text-[10px] text-blue-600 bg-white px-2 py-0.5 rounded border border-blue-200 shrink-0 ml-2">
                   กำหนดเอง
@@ -211,7 +252,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
               </div>
               <div className="space-y-0.5 mt-0.5">
                 {filteredCustom.map((item, idx) => {
-                  const isSelected = item.trim().toLowerCase() === value.trim().toLowerCase();
+                  const isSelected = item.trim().toLowerCase() === query;
                   return (
                     <div
                       key={`custom-${idx}-${item.slice(0, 10)}`}
@@ -222,7 +263,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
                       }`}
                       onClick={() => handleSelectOption(item)}
                     >
-                      <span className="truncate flex-1 pr-2">{item}</span>
+                      <span className="truncate flex-1 pr-2 font-sarabun">{item}</span>
                       <div className="flex items-center gap-1 shrink-0">
                         {isSelected && <Check className="w-4 h-4 text-blue-600" />}
                         {onDeleteCustomOption && (
@@ -255,7 +296,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
               </div>
               <div className="space-y-0.5 mt-0.5">
                 {filteredPreset.map((item, idx) => {
-                  const isSelected = item.trim().toLowerCase() === value.trim().toLowerCase();
+                  const isSelected = item.trim().toLowerCase() === query;
                   return (
                     <div
                       key={`preset-${idx}-${item.slice(0, 10)}`}
@@ -266,7 +307,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
                       }`}
                       onClick={() => handleSelectOption(item)}
                     >
-                      <span className="truncate flex-1 pr-2">{item}</span>
+                      <span className="truncate flex-1 pr-2 font-sarabun">{item}</span>
                       {isSelected && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
                     </div>
                   );
@@ -277,7 +318,7 @@ export const SearchableCombobox: React.FC<SearchableComboboxProps> = ({
 
           {/* Empty State */}
           {!hasOptions && !value.trim() && (
-            <div className="px-4 py-6 text-center text-xs text-slate-400">
+            <div className="px-4 py-6 text-center text-xs text-slate-400 font-sarabun">
               ไม่มีข้อมูลตัวเลือก เริ่มพิมพ์ข้อความได้ทันที
             </div>
           )}

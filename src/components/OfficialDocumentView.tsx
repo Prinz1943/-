@@ -299,10 +299,10 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
             id={`document-sheet-${section.id}`}
             className={`official-document-sheet bg-white ${
               isPortrait ? 'max-w-4xl p-3.5 sm:p-7 md:p-8' : 'max-w-6xl p-3.5 sm:p-8 md:p-12'
-            } shadow-md rounded-lg border border-slate-300 mx-auto font-sarabun text-black ${
+            } shadow-sm rounded-lg border border-slate-300 mx-auto font-sarabun text-black ${
               sectionIdx > 0 ? 'page-break-before print:mt-8' : ''
             }`}
-            style={{ minHeight: '600px' }}
+            style={{ minHeight: '600px', backgroundColor: '#ffffff' }}
           >
             {/* Header: Seal Emblem */}
             {settings.showSeal && (
@@ -326,9 +326,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
             {/* Official Table Matching Images with smooth mobile horizontal scroll and min-width */}
             <div className="overflow-x-auto -mx-1 sm:mx-0 pb-2 scrollbar-thin">
-              <table className={`official-table ${isPortrait ? 'min-w-[650px]' : 'min-w-[820px]'} w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug`}>
+              <table className={`official-table bg-white ${isPortrait ? 'min-w-[650px]' : 'min-w-[820px]'} w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug`}>
                 <thead>
-                  <tr className="bg-slate-50 print:bg-transparent">
+                  <tr className="bg-white">
                     <th className="border-2 border-black px-2 py-2 font-bold text-center w-[20.5%] min-w-[125px] align-middle">
                       <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                         <span>ผู้บริหาร</span>
@@ -366,7 +366,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                     if (items.length === 0) {
                       // Executive has no item today
                       return (
-                        <tr key={`empty-${exec.id}`} className="hover:bg-slate-50/50">
+                        <tr key={`empty-${exec.id}`} className="bg-white">
                           {/* Executive column */}
                           <td className="border-2 border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]">
                             <div className="font-semibold text-black text-[13px] sm:text-[13.5px] whitespace-nowrap leading-tight">{exec.name}</div>
@@ -405,8 +405,8 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-1 py-2 text-center text-slate-400 font-sarabun text-xs w-[5.5%] min-w-[38px] max-w-[50px] whitespace-nowrap">-</td>
-                          <td className="border-2 border-black px-2.5 py-2.5 text-center text-slate-400 font-sarabun italic">
+                          <td className="border-2 border-black px-1 py-2 text-center text-slate-400 font-sarabun text-xs bg-white w-[5.5%] min-w-[38px] max-w-[50px] whitespace-nowrap">-</td>
+                          <td className="border-2 border-black px-2.5 py-2.5 text-center text-slate-400 font-sarabun italic bg-white">
                             - ไม่มีวาระงาน -
                             {isAdmin && (
                               <div className="no-print mt-1">
@@ -423,9 +423,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
+                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
                         </tr>
                       );
                     }
@@ -434,7 +434,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                     return items.map((item, idx) => {
                       const isFirstRow = idx === 0;
                       return (
-                        <tr key={item.id} className="hover:bg-amber-50/20 transition-colors group">
+                        <tr key={item.id} className="bg-white group">
                           {/* Executive cell (spans items.length rows) */}
                           {isFirstRow && (
                             <td

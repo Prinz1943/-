@@ -519,7 +519,7 @@ export default function App() {
   const formattedDateTitle = formatThaiDateTitle(selectedDate, settings.useThaiNumerals);
 
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col selection:bg-blue-600 selection:text-white relative">
+    <div className="min-h-screen bg-white flex flex-col selection:bg-blue-600 selection:text-white relative">
       {/* Toast Notification for PDF Direct Download */}
       {downloadNotification && (
         <div className="no-print fixed top-4 right-4 z-50 max-w-sm sm:max-w-md bg-slate-900/95 backdrop-blur-md text-white px-4 py-3 rounded-2xl shadow-2xl border border-slate-700/80 flex items-center gap-3 animate-in fade-in slide-in-from-top-3 duration-200">
@@ -692,7 +692,7 @@ export default function App() {
         </div>
 
         {/* Sub-bar: Category Tabs & Date Navigator */}
-        <div className="bg-slate-50 border-t border-slate-200">
+        <div className="bg-white border-t border-slate-200">
           <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
             {/* Category Switcher Tabs: horizontal smooth scroll without wrap on mobile */}
             <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar scroll-smooth whitespace-nowrap py-0.5 -mx-3 px-3 sm:mx-0 sm:px-0">

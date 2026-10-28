@@ -155,11 +155,15 @@ export async function exportDocumentToPdf(
         (item as HTMLElement).style.removeProperty('display');
       });
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const imgData = canvas.toDataURL('image/png');
 
       if (pagesRendered > 0) {
         pdf.addPage('a4', isPortrait ? 'portrait' : 'landscape');
       }
+
+      // Explicitly fill entire page background with pure white #FFFFFF
+      pdf.setFillColor(255, 255, 255);
+      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
 
       // Calculate aspect ratio fit to A4 landscape
       const imgWidth = canvas.width;
@@ -178,7 +182,7 @@ export async function exportDocumentToPdf(
       const xOffset = margin + (targetWidth - renderWidth) / 2;
       const yOffset = margin + (targetHeight - renderHeight) / 2;
 
-      pdf.addImage(imgData, 'JPEG', xOffset, yOffset, renderWidth, renderHeight, undefined, 'FAST');
+      pdf.addImage(imgData, 'PNG', xOffset, yOffset, renderWidth, renderHeight, undefined, 'FAST');
       pagesRendered++;
     }
 
