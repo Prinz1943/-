@@ -45,15 +45,6 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
   const [copied, setCopied] = React.useState(false);
   const [isExportingPdf, setIsExportingPdf] = React.useState(false);
   const [downloadNotice, setDownloadNotice] = React.useState('');
-  const [liveDate, setLiveDate] = React.useState<Date>(new Date());
-
-  React.useEffect(() => {
-    // Keep live time current
-    const timer = setInterval(() => {
-      setLiveDate(new Date());
-    }, 15000);
-    return () => clearInterval(timer);
-  }, []);
 
 
   // Determine which sections to render
@@ -593,10 +584,10 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                             <span className="font-bold shrink-0">สถานะ :</span>
                             <span className="text-black font-normal">
                               {formatDocumentStatusTimestamp(
-                                date,
+                                settings.lastSavedTimestamp,
                                 settings.useThaiNumerals,
                                 settings.statusTimestampOption === 'custom' ? settings.customStatusTime : undefined,
-                                liveDate
+                                date
                               )}
                             </span>
                           </div>

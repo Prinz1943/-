@@ -136,6 +136,7 @@ export default function App() {
           ...INITIAL_SETTINGS,
           ...parsed,
           customSealUrl: parsed.customSealUrl || '/assets/lopburi-seal.jpg',
+          lastSavedTimestamp: parsed.lastSavedTimestamp || INITIAL_SETTINGS.lastSavedTimestamp,
         };
       }
       return INITIAL_SETTINGS;
@@ -265,6 +266,13 @@ export default function App() {
     position: string;
     category: CategoryType;
   }) => {
+    const nowIso = new Date().toISOString();
+    const updatedSettings: DocumentSettings = {
+      ...settings,
+      lastSavedTimestamp: nowIso,
+    };
+    setSettings(updatedSettings);
+
     if (execData.id) {
       const updatedExec = {
         ...(executives.find((e) => e.id === execData.id) as Executive),
@@ -273,7 +281,10 @@ export default function App() {
       setExecutives((prev) =>
         prev.map((e) => (e.id === execData.id ? updatedExec : e))
       );
-      await saveExecutiveToFirestore(updatedExec);
+      await Promise.all([
+        saveExecutiveToFirestore(updatedExec),
+        saveSettingsToFirestore(updatedSettings),
+      ]);
     } else {
       const maxOrder = executives
         .filter((e) => e.category === execData.category)
@@ -287,13 +298,25 @@ export default function App() {
         order: maxOrder + 1,
       };
       setExecutives((prev) => [...prev, newExec]);
-      await saveExecutiveToFirestore(newExec);
+      await Promise.all([
+        saveExecutiveToFirestore(newExec),
+        saveSettingsToFirestore(updatedSettings),
+      ]);
     }
   };
 
   const handleSaveExecutives = async (newExecs: Executive[]) => {
+    const nowIso = new Date().toISOString();
+    const updatedSettings: DocumentSettings = {
+      ...settings,
+      lastSavedTimestamp: nowIso,
+    };
+    setSettings(updatedSettings);
     setExecutives(newExecs);
-    await batchSaveExecutivesToFirestore(newExecs);
+    await Promise.all([
+      batchSaveExecutivesToFirestore(newExecs),
+      saveSettingsToFirestore(updatedSettings),
+    ]);
   };
 
   // In-app confirmation dialog state (replaces window.confirm blocked by iframes)
@@ -324,8 +347,17 @@ export default function App() {
       message: `ต้องการลบ "${name}" ออกจากทำเนียบผู้บริหารของตารางและคลาวด์ใช่หรือไม่?`,
       confirmText: 'ยืนยันลบ',
       onConfirm: async () => {
+        const nowIso = new Date().toISOString();
+        const updatedSettings: DocumentSettings = {
+          ...settings,
+          lastSavedTimestamp: nowIso,
+        };
+        setSettings(updatedSettings);
         setExecutives((prev) => prev.filter((e) => e.id !== id));
-        await deleteExecutiveFromFirestore(id);
+        await Promise.all([
+          deleteExecutiveFromFirestore(id),
+          saveSettingsToFirestore(updatedSettings),
+        ]);
       },
     });
   };
@@ -363,6 +395,13 @@ export default function App() {
 
   // Handlers for Schedule items (Syncs to Firestore)
   const handleSaveSchedule = async (itemData: Partial<ScheduleItem>) => {
+    const nowIso = new Date().toISOString();
+    const updatedSettings: DocumentSettings = {
+      ...settings,
+      lastSavedTimestamp: nowIso,
+    };
+    setSettings(updatedSettings);
+
     let targetItem: ScheduleItem;
     if (itemData.id) {
       targetItem = {
@@ -386,7 +425,10 @@ export default function App() {
       };
       setSchedules((prev) => [...prev, targetItem]);
     }
-    await saveScheduleToFirestore(targetItem);
+    await Promise.all([
+      saveScheduleToFirestore(targetItem),
+      saveSettingsToFirestore(updatedSettings),
+    ]);
   };
 
   const handleDeleteSchedule = (id: string) => {
@@ -402,8 +444,17 @@ export default function App() {
       message: `ต้องการลบวาระงาน${agendaText} จากคลาวด์ Firestore ใช่หรือไม่?`,
       confirmText: 'ยืนยันลบ',
       onConfirm: async () => {
+        const nowIso = new Date().toISOString();
+        const updatedSettings: DocumentSettings = {
+          ...settings,
+          lastSavedTimestamp: nowIso,
+        };
+        setSettings(updatedSettings);
         setSchedules((prev) => prev.filter((s) => s.id !== id));
-        await deleteScheduleFromFirestore(id);
+        await Promise.all([
+          deleteScheduleFromFirestore(id),
+          saveSettingsToFirestore(updatedSettings),
+        ]);
       },
     });
   };
@@ -417,9 +468,9 @@ export default function App() {
         date: prefill.date || selectedDate,
         time: prefill.time || getCurrentThaiTime(false, true),
         agenda: prefill.agenda || '',
-        location: prefill.location || 'ห้องประชุมทานตะวัน ชั้น ๕ ศาลากลางจังหวัดลพบุรี อ.เมืองลพบุรี จ.ลพบุรี',
-        dressCode: prefill.dressCode || 'ชุดสุภาพไว้ทุกข์',
-        department: prefill.department || 'สำนักงานจังหวัดลพบุรี (กลุ่มงานอำนวยการ)',
+        location: prefill.location || '',
+        dressCode: prefill.dressCode || '',
+        department: prefill.department || '',
       });
     } else {
       setEditingSchedule(null);
@@ -433,8 +484,12 @@ export default function App() {
   };
 
   const handleUpdateSettings = async (newSettings: DocumentSettings) => {
-    setSettings(newSettings);
-    await saveSettingsToFirestore(newSettings);
+    const updatedSettings: DocumentSettings = {
+      ...newSettings,
+      lastSavedTimestamp: new Date().toISOString(),
+    };
+    setSettings(updatedSettings);
+    await saveSettingsToFirestore(updatedSettings);
   };
 
   // Date step helpers

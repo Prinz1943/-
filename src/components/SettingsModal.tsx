@@ -375,9 +375,9 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                           : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-100'
                       }`}
                     >
-                      <div>อัปเดตวันและเวลาปัจจุบันเสมอ</div>
+                      <div>บันทึกวันและเวลาปัจจุบันตอนกดบันทึก (แนะนำ)</div>
                       <div className="text-[10px] text-slate-500 mt-0.5">
-                        (เช่น ๒๐ ตุลาคม ๒๕๖๙ เวลา ๑๖.๓๐ น.)
+                        (เช่น ๒๘ ตุลาคม ๒๕๖๙ เวลา ๑๕.๒๒ น. ตามเวลาที่กดบันทึกล่าสุด)
                       </div>
                     </button>
 
