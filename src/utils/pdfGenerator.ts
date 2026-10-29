@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+import html2canvas from 'html2canvas-pro';
 
 /**
  * Pre-convert images inside the element to inline base64 data URLs
@@ -137,6 +137,11 @@ export async function exportDocumentToPdf(
         backgroundColor: '#FFFFFF',
         logging: false,
         windowWidth: isPortrait ? 900 : 1280,
+        onclone: (_clonedDoc, clonedEl) => {
+          clonedEl.querySelectorAll('.no-print').forEach((item) => {
+            (item as HTMLElement).remove();
+          });
+        },
       });
 
       // Restore images
