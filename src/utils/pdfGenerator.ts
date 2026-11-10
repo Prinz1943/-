@@ -141,6 +141,16 @@ export async function exportDocumentToPdf(
           clonedEl.querySelectorAll('.no-print').forEach((item) => {
             (item as HTMLElement).remove();
           });
+          clonedEl.querySelectorAll('.official-table').forEach((table) => {
+            const tbl = table as HTMLTableElement;
+            tbl.style.borderCollapse = 'collapse';
+            tbl.style.border = '1.5px solid #000000';
+          });
+          clonedEl.querySelectorAll('.official-table th, .official-table td').forEach((cell) => {
+            const c = cell as HTMLElement;
+            c.style.border = '1.5px solid #000000';
+            c.style.borderColor = '#000000';
+          });
         },
       });
 
