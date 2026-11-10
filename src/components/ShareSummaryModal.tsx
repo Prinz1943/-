@@ -43,10 +43,34 @@ export const ShareSummaryModal: React.FC<ShareSummaryModalProps> = ({
       output += `📅 ประจำ${formattedDate}\n`;
       output += `═══════════════════════════\n`;
 
+      const isManthana = (name: string) => name.replace(/\s+/g, '').includes('มัณฑนาสินนะ');
+      const manthanaExecIds = new Set(
+        executives.filter((e) => isManthana(e.name)).map((e) => e.id)
+      );
+      manthanaExecIds.add('exec-5');
+      manthanaExecIds.add('exec-high-6');
+
       catExecs.forEach((exec) => {
-        const items = schedules
-          .filter((s) => s.category === cat && s.executiveId === exec.id && s.date === date)
-          .sort((a, b) => a.time.localeCompare(b.time));
+        let items: ScheduleItem[];
+        if (isManthana(exec.name)) {
+          const matched = schedules.filter(
+            (s) => (manthanaExecIds.has(s.executiveId) || (s.category === cat && s.executiveId === exec.id)) && s.date === date
+          );
+          const seen = new Set<string>();
+          const uniqueItems: ScheduleItem[] = [];
+          for (const item of matched) {
+            const sig = `${item.time.trim()}|${item.agenda.trim()}|${item.location.trim()}`;
+            if (!seen.has(sig)) {
+              seen.add(sig);
+              uniqueItems.push(item);
+            }
+          }
+          items = uniqueItems.sort((a, b) => a.time.localeCompare(b.time));
+        } else {
+          items = schedules
+            .filter((s) => s.category === cat && s.executiveId === exec.id && s.date === date)
+            .sort((a, b) => a.time.localeCompare(b.time));
+        }
 
         if (items.length > 0) {
           output += `\n🔹 ${exec.name}\n   ${exec.position}\n`;

@@ -92,10 +92,34 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
     let text = `📋 ${title}\n📅 ${formattedDate}\n------------------------\n`;
 
+    const isManthana = (name: string) => name.replace(/\s+/g, '').includes('มัณฑนาสินนะ');
+    const manthanaExecIds = new Set(
+      executives.filter((e) => isManthana(e.name)).map((e) => e.id)
+    );
+    manthanaExecIds.add('exec-5');
+    manthanaExecIds.add('exec-high-6');
+
     catExecs.forEach((exec) => {
-      const items = schedules
-        .filter((s) => s.category === targetCategory && s.executiveId === exec.id && s.date === date)
-        .sort((a, b) => a.time.localeCompare(b.time));
+      let items: ScheduleItem[];
+      if (isManthana(exec.name)) {
+        const matched = schedules.filter(
+          (s) => (manthanaExecIds.has(s.executiveId) || (s.category === targetCategory && s.executiveId === exec.id)) && s.date === date
+        );
+        const seen = new Set<string>();
+        const uniqueItems: ScheduleItem[] = [];
+        for (const item of matched) {
+          const sig = `${item.time.trim()}|${item.agenda.trim()}|${item.location.trim()}`;
+          if (!seen.has(sig)) {
+            seen.add(sig);
+            uniqueItems.push(item);
+          }
+        }
+        items = uniqueItems.sort((a, b) => a.time.localeCompare(b.time));
+      } else {
+        items = schedules
+          .filter((s) => s.category === targetCategory && s.executiveId === exec.id && s.date === date)
+          .sort((a, b) => a.time.localeCompare(b.time));
+      }
 
       if (items.length > 0) {
         text += `\n👤 ${exec.name} (${exec.position})\n`;
@@ -275,10 +299,42 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
           .sort((a, b) => a.order - b.order);
 
         // Group schedules for each executive
+        const isManthana = (name: string) => name.replace(/\s+/g, '').includes('มัณฑนาสินนะ');
+
         const execRowsData = catExecs.map((exec) => {
-          const items = schedules
-            .filter((s) => s.category === section.id && s.executiveId === exec.id && s.date === date)
-            .sort((a, b) => a.time.localeCompare(b.time));
+          let items: ScheduleItem[];
+
+          if (isManthana(exec.name)) {
+            // For นางสาวมัณฑนา สินนะ (หัวหน้าสำนักงานจังหวัดลพบุรี):
+            // Show all her schedules in both tables simultaneously.
+            // Match by name or any executive record of Manthana.
+            const manthanaExecIds = new Set(
+              executives.filter((e) => isManthana(e.name)).map((e) => e.id)
+            );
+            manthanaExecIds.add('exec-5');
+            manthanaExecIds.add('exec-high-6');
+
+            const matched = schedules.filter(
+              (s) => (manthanaExecIds.has(s.executiveId) || (s.category === section.id && s.executiveId === exec.id)) && s.date === date
+            );
+
+            // Deduplicate items that may have been created or cloned for both tables
+            const seen = new Set<string>();
+            const uniqueItems: ScheduleItem[] = [];
+            for (const item of matched) {
+              const signature = `${item.time.trim()}|${item.agenda.trim()}|${item.location.trim()}`;
+              if (!seen.has(signature)) {
+                seen.add(signature);
+                uniqueItems.push(item);
+              }
+            }
+            items = uniqueItems.sort((a, b) => a.time.localeCompare(b.time));
+          } else {
+            items = schedules
+              .filter((s) => s.category === section.id && s.executiveId === exec.id && s.date === date)
+              .sort((a, b) => a.time.localeCompare(b.time));
+          }
+
           return { exec, items };
         });
 

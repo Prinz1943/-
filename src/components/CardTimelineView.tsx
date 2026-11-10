@@ -205,7 +205,47 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
             .filter((e) => category === 'all' || e.category === category)
             .filter((e) => selectedExecId === 'all' || e.id === selectedExecId)
             .map((exec) => {
-              const execSchedules = sortedSchedules.filter((s) => s.executiveId === exec.id);
+              const isManthana = exec.name.replace(/\s+/g, '').includes('มัณฑนาสินนะ');
+              let execSchedules: ScheduleItem[];
+
+              if (isManthana) {
+                const manthanaIds = new Set(
+                  executives
+                    .filter((e) => e.name.replace(/\s+/g, '').includes('มัณฑนาสินนะ'))
+                    .map((e) => e.id)
+                );
+                manthanaIds.add('exec-5');
+                manthanaIds.add('exec-high-6');
+
+                const matched = schedules.filter((s) => {
+                  if (s.date !== date) return false;
+                  if (!manthanaIds.has(s.executiveId)) return false;
+                  if (selectedDept !== 'all' && s.department !== selectedDept) return false;
+                  if (searchQuery.trim()) {
+                    const q = searchQuery.toLowerCase();
+                    const matchAgenda = s.agenda.toLowerCase().includes(q);
+                    const matchLocation = s.location.toLowerCase().includes(q);
+                    const matchDress = s.dressCode.toLowerCase().includes(q);
+                    const matchDept = s.department.toLowerCase().includes(q);
+                    return matchAgenda || matchLocation || matchDress || matchDept;
+                  }
+                  return true;
+                });
+
+                const seen = new Set<string>();
+                const uniqueItems: ScheduleItem[] = [];
+                for (const item of matched) {
+                  const sig = `${item.time.trim()}|${item.agenda.trim()}|${item.location.trim()}`;
+                  if (!seen.has(sig)) {
+                    seen.add(sig);
+                    uniqueItems.push(item);
+                  }
+                }
+                execSchedules = uniqueItems.sort((a, b) => a.time.localeCompare(b.time));
+              } else {
+                execSchedules = sortedSchedules.filter((s) => s.executiveId === exec.id);
+              }
+
               if (execSchedules.length === 0 && selectedExecId !== 'all') {
                 return null;
               }

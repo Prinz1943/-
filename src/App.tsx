@@ -837,18 +837,6 @@ export default function App() {
                 </button>
               )}
 
-              {/* Sample Date Button */}
-              <button
-                onClick={() => setSelectedDate('2026-10-16')}
-                title="เปิดดูข้อมูลตัวอย่างตามรูปภาพผู้ใช้ วันที่ 16 ต.ค. 2569"
-                className={`px-2.5 py-1.5 text-xs font-medium rounded-lg transition-colors shadow-2xs shrink-0 ${
-                  selectedDate === '2026-10-16'
-                    ? 'bg-blue-800 text-white font-semibold'
-                    : 'bg-white hover:bg-slate-100 border border-slate-200 text-slate-600'
-                }`}
-              >
-                ๑๖ ต.ค. (ตัวอย่าง)
-              </button>
 
               {/* Real-time Live Clock (กรอบเวลานิ่ง ไม่ขยับสั่นตามวินาที) */}
               <div

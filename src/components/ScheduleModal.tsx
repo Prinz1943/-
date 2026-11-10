@@ -344,7 +344,9 @@ export const ScheduleModal: React.FC<ScheduleModalProps> = ({
                 <span>ผู้บริหาร</span> <span className="text-red-500">*</span>
               </label>
               <span className="text-[11px] text-slate-500 font-medium">
-                {executives.find((e) => e.id === executiveId)?.category === 'high_executives'
+                {executives.find((e) => e.id === executiveId)?.name.replace(/\s+/g, '').includes('มัณฑนาสินนะ')
+                  ? '✨ แสดงผลทั้งตารางระดับสูง และสำนักงานจังหวัดพร้อมกัน'
+                  : executives.find((e) => e.id === executiveId)?.category === 'high_executives'
                   ? '🏛️ ผู้บริหารระดับสูงของจังหวัด'
                   : '🏢 ผู้บริหารสำนักงานจังหวัด'}
               </span>
