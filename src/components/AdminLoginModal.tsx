@@ -110,14 +110,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               </button>
             </div>
 
-            {errorMsg ? (
+            {errorMsg && (
               <p className="text-xs text-red-600 mt-1.5 flex items-center gap-1 animate-in fade-in">
                 <AlertCircle className="w-3.5 h-3.5 shrink-0" />
                 {errorMsg}
-              </p>
-            ) : (
-              <p className="text-[11px] text-slate-400 mt-1.5">
-                รหัสเริ่มต้นสำหรับเจ้าหน้าที่คือ: <span className="font-mono font-semibold text-slate-700">1567</span> (สามารถแก้ไขได้ในหน้าตั้งค่า)
               </p>
             )}
           </div>

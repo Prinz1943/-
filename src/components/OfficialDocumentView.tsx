@@ -373,10 +373,10 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
 
             {/* Official Table Matching Images with smooth mobile horizontal scroll and min-width */}
             <div className="overflow-x-auto -mx-1 sm:mx-0 pb-2 scrollbar-thin">
-              <table className={`official-table bg-white ${isPortrait ? 'min-w-[650px]' : 'min-w-[820px]'} w-full border-collapse border-2 border-black text-[13px] sm:text-[13.5px] leading-snug`}>
+              <table className={`official-table bg-white ${isPortrait ? 'min-w-[650px]' : 'min-w-[820px]'} w-full border-collapse border border-black text-[13px] sm:text-[13.5px] leading-snug`}>
                 <thead>
                   <tr className="bg-white">
-                    <th className="border-2 border-black px-2 py-2 font-bold text-center w-[20.5%] min-w-[125px] align-middle">
+                    <th className="border border-black px-2 py-2 font-bold text-center w-[20.5%] min-w-[125px] align-middle">
                       <div className="flex items-center justify-center gap-1 whitespace-nowrap">
                         <span>ผู้บริหาร</span>
                         {isAdmin && (
@@ -391,19 +391,19 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                         )}
                       </div>
                     </th>
-                    <th className="border-2 border-black px-1 py-2 font-bold text-center w-[5.5%] min-w-[38px] max-w-[50px] align-middle text-[11.5px] sm:text-[12px] whitespace-nowrap">
+                    <th className="border border-black px-1 py-2 font-bold text-center w-[5.5%] min-w-[38px] max-w-[50px] align-middle text-[11.5px] sm:text-[12px] whitespace-nowrap">
                       เวลา
                     </th>
-                    <th className="border-2 border-black px-2.5 py-2 font-bold text-center w-[38%] min-w-[170px] align-middle">
+                    <th className="border border-black px-2.5 py-2 font-bold text-center w-[38%] min-w-[170px] align-middle">
                       วาระงาน
                     </th>
-                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[16%] min-w-[95px] align-middle">
+                    <th className="border border-black px-1.5 py-2 font-bold text-center w-[16%] min-w-[95px] align-middle">
                       สถานที่
                     </th>
-                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
+                    <th className="border border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
                       การแต่งกาย
                     </th>
-                    <th className="border-2 border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
+                    <th className="border border-black px-1.5 py-2 font-bold text-center w-[10%] min-w-[70px] align-middle">
                       หน่วยงาน
                     </th>
                   </tr>
@@ -415,7 +415,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                       return (
                         <tr key={`empty-${exec.id}`} className="bg-white">
                           {/* Executive column */}
-                          <td className="border-2 border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]">
+                          <td className="border border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]">
                             <div className="font-semibold text-black text-[13px] sm:text-[13.5px] whitespace-nowrap leading-tight">{exec.name}</div>
                             <div className="text-slate-800 text-[11.5px] sm:text-[12px] leading-tight mt-0.5">{exec.position}</div>
                             {isAdmin && (
@@ -452,8 +452,8 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-1 py-2 text-center text-slate-400 font-sarabun text-xs bg-white w-[5.5%] min-w-[38px] max-w-[50px] whitespace-nowrap">-</td>
-                          <td className="border-2 border-black px-2.5 py-2.5 text-center text-slate-400 font-sarabun italic bg-white">
+                          <td className="border border-black px-1 py-2 text-center text-slate-400 font-sarabun text-xs bg-white w-[5.5%] min-w-[38px] max-w-[50px] whitespace-nowrap">-</td>
+                          <td className="border border-black px-2.5 py-2.5 text-center text-slate-400 font-sarabun italic bg-white">
                             - ไม่มีวาระงาน -
                             {isAdmin && (
                               <div className="no-print mt-1">
@@ -470,9 +470,9 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                               </div>
                             )}
                           </td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
-                          <td className="border-2 border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
+                          <td className="border border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
+                          <td className="border border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
+                          <td className="border border-black px-1.5 py-2 text-center text-slate-400 font-sarabun bg-white">-</td>
                         </tr>
                       );
                     }
@@ -486,7 +486,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           {isFirstRow && (
                             <td
                               rowSpan={items.length}
-                              className="border-2 border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]"
+                              className="border border-black px-2 py-2.5 align-top font-sarabun text-left bg-white w-[20.5%] min-w-[125px]"
                             >
                               <div className="font-semibold text-black text-[13px] sm:text-[13.5px] whitespace-nowrap leading-tight">{exec.name}</div>
                               <div className="text-slate-900 text-[11.5px] sm:text-[12px] leading-tight mt-0.5">{exec.position}</div>
@@ -527,12 +527,12 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           )}
 
                           {/* Time (บีบช่องเวลาแน่นกระชับพิเศษ) */}
-                          <td className="border-2 border-black px-1 py-2 text-center align-top font-sarabun font-semibold text-[11.5px] sm:text-[12px] whitespace-nowrap leading-tight tracking-tighter w-[5.5%] min-w-[38px] max-w-[50px]">
+                          <td className="border border-black px-1 py-2 text-center align-top font-sarabun font-semibold text-[11.5px] sm:text-[12px] whitespace-nowrap leading-tight tracking-tighter w-[5.5%] min-w-[38px] max-w-[50px]">
                             {formatTimeDisplay(item.time, settings.useThaiNumerals)}
                           </td>
 
                           {/* Agenda */}
-                          <td className="border-2 border-black px-2.5 py-2 align-top font-sarabun text-left leading-relaxed">
+                          <td className="border border-black px-2.5 py-2 align-top font-sarabun text-left leading-relaxed">
                             <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black">
                               {item.agenda}
                             </div>
@@ -580,21 +580,21 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                           </td>
 
                           {/* Location */}
-                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                          <td className="border border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
                             <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.location}
                             </div>
                           </td>
 
                           {/* Dress Code */}
-                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                          <td className="border border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
                             <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.dressCode}
                             </div>
                           </td>
 
                           {/* Department */}
-                          <td className="border-2 border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
+                          <td className="border border-black px-1.5 py-2 text-center align-top font-sarabun leading-relaxed">
                             <div className="whitespace-pre-line break-words [overflow-wrap:anywhere] [word-break:break-word] text-black text-[12.5px] sm:text-[13px]">
                               {item.department}
                             </div>
@@ -609,7 +609,7 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                     <tr className="bg-white">
                       <td
                         colSpan={6}
-                        className="border-2 border-black px-3 sm:px-4 py-2.5 font-sarabun text-black text-left text-[13.5px] sm:text-[14.5px] leading-relaxed"
+                        className="border border-black px-3 sm:px-4 py-2.5 font-sarabun text-black text-left text-[13.5px] sm:text-[14.5px] leading-relaxed"
                       >
                         <div className="flex flex-col gap-0.5">
                           <div className="flex flex-wrap items-baseline gap-1">

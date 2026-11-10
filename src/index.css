@@ -25,6 +25,19 @@
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Official Document Table - Uniform crisp 1.5px borders across screen, print, and PDF export */
+.official-table {
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  border: 1.5px solid #000000 !important;
+}
+
+.official-table th,
+.official-table td {
+  border: 1.5px solid #000000 !important;
+  border-color: #000000 !important;
+}
+
 /* Print specific styles for official Thai government document output */
 @media print {
   @page {
