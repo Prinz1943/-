@@ -30,12 +30,19 @@
   border-collapse: collapse !important;
   border-spacing: 0 !important;
   border: 1.5px solid #000000 !important;
+  background-color: #ffffff !important;
+}
+
+.official-table tr {
+  border: none !important;
+  background-color: #ffffff !important;
 }
 
 .official-table th,
 .official-table td {
   border: 1.5px solid #000000 !important;
   border-color: #000000 !important;
+  background-color: #ffffff !important;
 }
 
 /* Print specific styles for official Thai government document output */

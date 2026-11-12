@@ -210,6 +210,23 @@ export async function batchSaveExecutivesToFirestore(execs: Executive[]): Promis
 }
 
 /**
+ * Batch save schedules (e.g. after drag-and-drop reordering)
+ */
+export async function batchSaveSchedulesToFirestore(scheds: ScheduleItem[]): Promise<void> {
+  const path = 'schedules';
+  try {
+    const batch = writeBatch(db);
+    for (const s of scheds) {
+      batch.set(doc(db, 'schedules', s.id), s);
+    }
+    await batch.commit();
+  } catch (error) {
+    handleFirestoreError(error, OperationType.WRITE, path);
+  }
+}
+
+
+/**
  * Batch restore data to Firestore
  */
 export async function batchRestoreDataToFirestore(

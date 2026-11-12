@@ -50,23 +50,67 @@ function restoreImages(element: HTMLElement) {
 }
 
 /**
- * Direct file download trigger that works reliably across all browsers and devices
+ * Direct file download trigger that works reliably across all browsers and devices,
+ * especially iOS (iPhone / iPad) where standard anchor download can be blocked or hidden in Safari downloads.
  */
-function triggerFileDownload(blob: Blob, fileName: string) {
+async function triggerFileDownload(blob: Blob, fileName: string) {
+  // Check if device is iOS (iPhone/iPad/iPod or iPad on iOS 13+)
+  const isIOS =
+    typeof navigator !== 'undefined' &&
+    (/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+
+  // 1. Try iOS / Mobile Web Share API first (Opens standard iOS Share sheet with 'Save to Files', AirDrop, LINE, etc.)
+  if (typeof navigator !== 'undefined' && navigator.share && navigator.canShare) {
+    try {
+      const file = new File([blob], fileName, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: fileName,
+        });
+        return;
+      }
+    } catch (shareErr) {
+      // User cancelled share or share not supported, continue to fallback
+      if ((shareErr as Error).name === 'AbortError') {
+        return;
+      }
+    }
+  }
+
+  // 2. Standard direct anchor download
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
   anchor.download = fileName;
   anchor.setAttribute('download', fileName);
   anchor.style.display = 'none';
+
+  if (isIOS) {
+    // In iOS Safari, target="_blank" ensures the PDF opens in a new tab if direct download is silently queued
+    anchor.target = '_blank';
+    anchor.rel = 'noopener noreferrer';
+  }
+
   document.body.appendChild(anchor);
   anchor.click();
+
+  // 3. For iOS Safari fallback, if user is in in-app browser or anchor didn't prompt, open blob URL directly
+  if (isIOS) {
+    setTimeout(() => {
+      window.open(url, '_blank');
+    }, 400);
+  }
 
   setTimeout(() => {
     if (anchor.parentNode) {
       anchor.parentNode.removeChild(anchor);
     }
-    URL.revokeObjectURL(url);
+    // Clean up URL object after sufficient time for iOS viewer to load
+    setTimeout(() => {
+      URL.revokeObjectURL(url);
+    }, 60000);
   }, 1500);
 }
 
@@ -138,18 +182,44 @@ export async function exportDocumentToPdf(
         logging: false,
         windowWidth: isPortrait ? 900 : 1280,
         onclone: (_clonedDoc, clonedEl) => {
+          // Remove all non-printable buttons and tools
           clonedEl.querySelectorAll('.no-print').forEach((item) => {
             (item as HTMLElement).remove();
           });
+
+          // Style official tables cleanly to prevent rendering glitches
           clonedEl.querySelectorAll('.official-table').forEach((table) => {
             const tbl = table as HTMLTableElement;
             tbl.style.borderCollapse = 'collapse';
+            tbl.style.borderSpacing = '0';
             tbl.style.border = '1.5px solid #000000';
+            tbl.style.backgroundColor = '#ffffff';
           });
+
+          // Ensure <tr> has NO borders or shadows that could bleed across rowspan cells
+          clonedEl.querySelectorAll('.official-table tr').forEach((row) => {
+            const r = row as HTMLTableRowElement;
+            r.style.border = 'none';
+            r.style.borderTop = 'none';
+            r.style.borderBottom = 'none';
+            r.style.boxShadow = 'none';
+            r.style.outline = 'none';
+          });
+
+          // Explicitly set 1.5px solid black on all th and td
           clonedEl.querySelectorAll('.official-table th, .official-table td').forEach((cell) => {
             const c = cell as HTMLElement;
             c.style.border = '1.5px solid #000000';
             c.style.borderColor = '#000000';
+            c.style.backgroundColor = '#ffffff';
+            c.style.boxShadow = 'none';
+          });
+
+          // For cells with rowspan > 1 (e.g. executive name column), explicitly clear internal line artifacts
+          clonedEl.querySelectorAll('.official-table td[rowspan]').forEach((cell) => {
+            const c = cell as HTMLElement;
+            c.style.backgroundColor = '#ffffff';
+            c.style.zIndex = '2';
           });
         },
       });
@@ -202,9 +272,9 @@ export async function exportDocumentToPdf(
     }
 
     if (pagesRendered > 0) {
-      // 1. Direct Blob Download (Saves straight to local computer / device Downloads folder)
+      // 1. Direct Blob Download (Saves straight to local computer / device Downloads folder, iOS Files, or native share)
       const pdfBlob = pdf.output('blob');
-      triggerFileDownload(pdfBlob, fileName);
+      await triggerFileDownload(pdfBlob, fileName);
 
       // 2. Also execute pdf.save as secondary fallback
       try {

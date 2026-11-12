@@ -71,13 +71,18 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
     setDownloadNotice('กำลังสร้างไฟล์ PDF และดาวน์โหลดลงเครื่อง...');
     const ok = await exportDocumentToPdf(ids, fileName, setIsExportingPdf, settings.orientation ?? 'portrait');
     if (ok) {
-      setDownloadNotice(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
+      const isIOS = typeof navigator !== 'undefined' && (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1));
+      if (isIOS) {
+        setDownloadNotice(`สร้างไฟล์ PDF เรียบร้อยแล้ว (สามารถดูได้จากแอป "ไฟล์" (Files) หรือเมนูแชร์ของ iPhone/iPad)`);
+      } else {
+        setDownloadNotice(`ดาวน์โหลดไฟล์ "${fileName}" ลงในเครื่องเรียบร้อยแล้ว`);
+      }
     } else {
       setDownloadNotice('ไม่สามารถดาวน์โหลดไฟล์ได้ กรุณาลองใหม่อีกครั้ง');
     }
     setTimeout(() => {
       setDownloadNotice('');
-    }, 5000);
+    }, 6500);
   };
 
   const handlePrint = () => {
@@ -328,11 +333,21 @@ export const OfficialDocumentView: React.FC<OfficialDocumentViewProps> = ({
                 uniqueItems.push(item);
               }
             }
-            items = uniqueItems.sort((a, b) => a.time.localeCompare(b.time));
+            items = uniqueItems.sort((a, b) => {
+              const orderA = typeof a.order === 'number' ? a.order : 9999;
+              const orderB = typeof b.order === 'number' ? b.order : 9999;
+              if (orderA !== orderB) return orderA - orderB;
+              return a.time.localeCompare(b.time);
+            });
           } else {
             items = schedules
               .filter((s) => s.category === section.id && s.executiveId === exec.id && s.date === date)
-              .sort((a, b) => a.time.localeCompare(b.time));
+              .sort((a, b) => {
+                const orderA = typeof a.order === 'number' ? a.order : 9999;
+                const orderB = typeof b.order === 'number' ? b.order : 9999;
+                if (orderA !== orderB) return orderA - orderB;
+                return a.time.localeCompare(b.time);
+              });
           }
 
           return { exec, items };

@@ -18,6 +18,7 @@ export interface ScheduleItem {
   location: string;
   dressCode: string;
   department: string;
+  order?: number;
   note?: string;
   createdAt?: string;
 }

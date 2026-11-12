@@ -14,6 +14,9 @@ import {
   Calendar,
   Filter,
   CheckCircle2,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react';
 
 interface CardTimelineViewProps {
@@ -26,6 +29,7 @@ interface CardTimelineViewProps {
   onPromptLogin: () => void;
   onEditSchedule: (item: ScheduleItem) => void;
   onDeleteSchedule: (id: string) => void;
+  onReorderSchedules?: (items: ScheduleItem[]) => void;
   onAddSchedule: (prefill?: Partial<ScheduleItem>) => void;
   onEditExecutive?: (exec: Executive) => void;
   onDeleteExecutive?: (id: string) => void;
@@ -43,6 +47,7 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
   onPromptLogin,
   onEditSchedule,
   onDeleteSchedule,
+  onReorderSchedules,
   onAddSchedule,
   onEditExecutive,
   onDeleteExecutive,
@@ -52,6 +57,20 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedExecId, setSelectedExecId] = useState<string>('all');
   const [selectedDept, setSelectedDept] = useState<string>('all');
+
+  // Drag and drop state
+  const [draggedItemId, setDraggedItemId] = useState<string | null>(null);
+  const [dragOverItemId, setDragOverItemId] = useState<string | null>(null);
+
+  // Helper sort: prioritizes explicit order (if set), then falls back to time
+  const sortSchedules = (items: ScheduleItem[]): ScheduleItem[] => {
+    return [...items].sort((a, b) => {
+      const orderA = typeof a.order === 'number' ? a.order : 9999;
+      const orderB = typeof b.order === 'number' ? b.order : 9999;
+      if (orderA !== orderB) return orderA - orderB;
+      return a.time.localeCompare(b.time);
+    });
+  };
 
   // Filter schedules
   const filteredSchedules = schedules.filter((item) => {
@@ -74,8 +93,8 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
     return true;
   });
 
-  // Sort by time
-  const sortedSchedules = [...filteredSchedules].sort((a, b) => a.time.localeCompare(b.time));
+  // Sort by order then time
+  const sortedSchedules = sortSchedules(filteredSchedules);
 
   // Extract unique departments for filter
   const departments = Array.from(new Set(schedules.map((s) => s.department))).filter(Boolean);
@@ -84,6 +103,40 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
   const [viewGrouping, setViewGrouping] = useState<'by_executive' | 'chronological'>('by_executive');
 
   const execMap = new Map<string, Executive>(executives.map((e) => [e.id, e]));
+
+  // Drag and drop reordering handler
+  const handleReorderList = (sourceId: string, targetId: string, scopedItems: ScheduleItem[]) => {
+    if (sourceId === targetId || !onReorderSchedules) return;
+
+    const sourceIndex = scopedItems.findIndex((s) => s.id === sourceId);
+    const targetIndex = scopedItems.findIndex((s) => s.id === targetId);
+    if (sourceIndex === -1 || targetIndex === -1) return;
+
+    const newItems = [...scopedItems];
+    const [moved] = newItems.splice(sourceIndex, 1);
+    newItems.splice(targetIndex, 0, moved);
+
+    // Assign sequential order indices
+    const updatedWithOrder: ScheduleItem[] = newItems.map((item, idx) => ({
+      ...item,
+      order: idx + 1,
+    }));
+
+    onReorderSchedules(updatedWithOrder);
+  };
+
+  // Move item up or down via button (accessible alternative to drag-and-drop)
+  const handleMoveItem = (itemId: string, direction: 'up' | 'down', scopedItems: ScheduleItem[]) => {
+    if (!onReorderSchedules) return;
+    const idx = scopedItems.findIndex((s) => s.id === itemId);
+    if (idx === -1) return;
+    if (direction === 'up' && idx === 0) return;
+    if (direction === 'down' && idx === scopedItems.length - 1) return;
+
+    const targetIdx = direction === 'up' ? idx - 1 : idx + 1;
+    const targetItem = scopedItems[targetIdx];
+    handleReorderList(itemId, targetItem.id, scopedItems);
+  };
 
   return (
     <div className="space-y-6">
@@ -314,72 +367,153 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
                       <p className="text-sm text-slate-400 italic py-2">ไม่มีวาระงานสำหรับวันนี้</p>
                     ) : (
                       <div className="space-y-4">
-                        {execSchedules.map((item, idx) => (
-                          <div
-                            key={item.id}
-                            className="relative pl-6 pb-4 last:pb-0 border-l-2 border-blue-200 last:border-transparent group"
-                          >
-                            {/* Timeline node */}
-                            <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-xs" />
+                        {execSchedules.map((item, idx) => {
+                          const isBeingDragged = draggedItemId === item.id;
+                          const isDragTarget = dragOverItemId === item.id && draggedItemId !== item.id;
 
-                            <div className="bg-slate-50/70 hover:bg-slate-50 p-4 rounded-xl border border-slate-200/80 transition-all group-hover:border-blue-200 group-hover:shadow-xs">
-                              <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                                <div className="flex items-center gap-2">
-                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs font-sarabun">
-                                    <Clock className="w-3 h-3" />
-                                    {formatTimeDisplay(item.time, useThaiNumerals)}
-                                  </span>
-                                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
-                                    <Shirt className="w-3 h-3 text-amber-600" />
-                                    {item.dressCode}
-                                  </span>
-                                </div>
+                          return (
+                            <div
+                              key={item.id}
+                              draggable={isAdmin}
+                              onDragStart={(e) => {
+                                if (!isAdmin) return;
+                                setDraggedItemId(item.id);
+                                e.dataTransfer.effectAllowed = 'move';
+                                e.dataTransfer.setData('text/plain', item.id);
+                              }}
+                              onDragOver={(e) => {
+                                if (!isAdmin) return;
+                                e.preventDefault();
+                                e.dataTransfer.dropEffect = 'move';
+                                if (dragOverItemId !== item.id) {
+                                  setDragOverItemId(item.id);
+                                }
+                              }}
+                              onDragLeave={() => {
+                                if (dragOverItemId === item.id) {
+                                  setDragOverItemId(null);
+                                }
+                              }}
+                              onDrop={(e) => {
+                                if (!isAdmin) return;
+                                e.preventDefault();
+                                const sourceId = e.dataTransfer.getData('text/plain') || draggedItemId;
+                                if (sourceId) {
+                                  handleReorderList(sourceId, item.id, execSchedules);
+                                }
+                                setDraggedItemId(null);
+                                setDragOverItemId(null);
+                              }}
+                              onDragEnd={() => {
+                                setDraggedItemId(null);
+                                setDragOverItemId(null);
+                              }}
+                              className={`relative pl-6 pb-4 last:pb-0 border-l-2 border-blue-200 last:border-transparent group transition-all duration-150 ${
+                                isBeingDragged ? 'opacity-40 scale-[0.99]' : ''
+                              } ${
+                                isDragTarget ? 'ring-2 ring-blue-500 rounded-xl bg-blue-50/50' : ''
+                              }`}
+                            >
+                              {/* Timeline node */}
+                              <span className="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-blue-600 border-2 border-white shadow-xs" />
 
-                                {isAdmin && (
-                                  <div className="flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onEditSchedule(item);
-                                      }}
-                                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
-                                      title="แก้ไขวาระงานนี้"
-                                    >
-                                      <Edit2 className="w-3.5 h-3.5" />
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        onDeleteSchedule(item.id);
-                                      }}
-                                      className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
-                                      title="ลบวาระงานนี้"
-                                    >
-                                      <Trash2 className="w-3.5 h-3.5" />
-                                    </button>
+                              <div className="bg-slate-50/70 hover:bg-slate-50 p-4 rounded-xl border border-slate-200/80 transition-all group-hover:border-blue-200 group-hover:shadow-xs">
+                                <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
+                                  <div className="flex items-center gap-2">
+                                    {isAdmin && execSchedules.length > 1 && (
+                                      <div
+                                        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600 p-0.5 rounded transition-colors"
+                                        title="คลิกลากเพื่อจัดลำดับวาระงานนี้"
+                                      >
+                                        <GripVertical className="w-4 h-4" />
+                                      </div>
+                                    )}
+                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-bold bg-blue-600 text-white shadow-2xs font-sarabun">
+                                      <Clock className="w-3 h-3" />
+                                      {formatTimeDisplay(item.time, useThaiNumerals)}
+                                    </span>
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200">
+                                      <Shirt className="w-3 h-3 text-amber-600" />
+                                      {item.dressCode}
+                                    </span>
                                   </div>
-                                )}
-                              </div>
 
-                              <p className="text-sm font-medium text-slate-900 font-sarabun leading-relaxed mb-3 whitespace-pre-line break-words [overflow-wrap:anywhere]">
-                                {item.agenda}
-                              </p>
+                                  {isAdmin && (
+                                    <div className="flex items-center gap-1">
+                                      {/* Move Up / Move Down buttons */}
+                                      {execSchedules.length > 1 && (
+                                        <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg bg-white p-0.5 mr-1">
+                                          <button
+                                            type="button"
+                                            disabled={idx === 0}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleMoveItem(item.id, 'up', execSchedules);
+                                            }}
+                                            className="p-1 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                                            title="เลื่อนขึ้นด้านบน"
+                                          >
+                                            <ArrowUp className="w-3 h-3" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            disabled={idx === execSchedules.length - 1}
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              handleMoveItem(item.id, 'down', execSchedules);
+                                            }}
+                                            className="p-1 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                                            title="เลื่อนลงด้านล่าง"
+                                          >
+                                            <ArrowDown className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      )}
 
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600">
-                                <div className="flex items-start gap-1.5 text-slate-700">
-                                  <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
-                                  <span className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{item.location}</span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onEditSchedule(item);
+                                        }}
+                                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"
+                                        title="แก้ไขวาระงานนี้"
+                                      >
+                                        <Edit2 className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          onDeleteSchedule(item.id);
+                                        }}
+                                        className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md transition-colors cursor-pointer"
+                                        title="ลบวาระงานนี้"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="flex items-start gap-1.5 text-slate-600">
-                                  <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
-                                  <span className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{item.department}</span>
+
+                                <p className="text-sm font-medium text-slate-900 font-sarabun leading-relaxed mb-3 whitespace-pre-line break-words [overflow-wrap:anywhere]">
+                                  {item.agenda}
+                                </p>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-slate-600">
+                                  <div className="flex items-start gap-1.5 text-slate-700">
+                                    <MapPin className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                                    <span className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{item.location}</span>
+                                  </div>
+                                  <div className="flex items-start gap-1.5 text-slate-600">
+                                    <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                                    <span className="whitespace-pre-line break-words [overflow-wrap:anywhere]">{item.department}</span>
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -392,15 +526,64 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
       {/* Render Chronological Timeline */}
       {viewGrouping === 'chronological' && sortedSchedules.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 space-y-4">
-          {sortedSchedules.map((item) => {
+          {sortedSchedules.map((item, idx) => {
             const exec = execMap.get(item.executiveId);
+            const isBeingDragged = draggedItemId === item.id;
+            const isDragTarget = dragOverItemId === item.id && draggedItemId !== item.id;
+
             return (
               <div
                 key={item.id}
-                className="p-4 rounded-xl border border-slate-200 hover:border-blue-300 hover:bg-blue-50/20 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4"
+                draggable={isAdmin}
+                onDragStart={(e) => {
+                  if (!isAdmin) return;
+                  setDraggedItemId(item.id);
+                  e.dataTransfer.effectAllowed = 'move';
+                  e.dataTransfer.setData('text/plain', item.id);
+                }}
+                onDragOver={(e) => {
+                  if (!isAdmin) return;
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = 'move';
+                  if (dragOverItemId !== item.id) {
+                    setDragOverItemId(item.id);
+                  }
+                }}
+                onDragLeave={() => {
+                  if (dragOverItemId === item.id) {
+                    setDragOverItemId(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  if (!isAdmin) return;
+                  e.preventDefault();
+                  const sourceId = e.dataTransfer.getData('text/plain') || draggedItemId;
+                  if (sourceId) {
+                    handleReorderList(sourceId, item.id, sortedSchedules);
+                  }
+                  setDraggedItemId(null);
+                  setDragOverItemId(null);
+                }}
+                onDragEnd={() => {
+                  setDraggedItemId(null);
+                  setDragOverItemId(null);
+                }}
+                className={`p-4 rounded-xl border transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                  isBeingDragged ? 'opacity-40 scale-[0.99] border-blue-300' : 'border-slate-200 hover:border-blue-300 hover:bg-blue-50/20'
+                } ${
+                  isDragTarget ? 'ring-2 ring-blue-500 bg-blue-50/60' : ''
+                }`}
               >
                 <div className="space-y-1.5 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
+                    {isAdmin && sortedSchedules.length > 1 && (
+                      <div
+                        className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-blue-600 p-0.5 rounded transition-colors"
+                        title="คลิกลากเพื่อจัดลำดับวาระงานนี้"
+                      >
+                        <GripVertical className="w-4 h-4" />
+                      </div>
+                    )}
                     <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-xs font-bold bg-blue-700 text-white font-sarabun">
                       <Clock className="w-3 h-3" />
                       {formatTimeDisplay(item.time, useThaiNumerals)}
@@ -429,6 +612,36 @@ export const CardTimelineView: React.FC<CardTimelineViewProps> = ({
 
                 {isAdmin && (
                   <div className="flex items-center gap-2 self-end md:self-center shrink-0">
+                    {/* Move Up / Move Down buttons */}
+                    {sortedSchedules.length > 1 && (
+                      <div className="flex items-center gap-0.5 border border-slate-200 rounded-lg bg-white p-0.5">
+                        <button
+                          type="button"
+                          disabled={idx === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveItem(item.id, 'up', sortedSchedules);
+                          }}
+                          className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                          title="เลื่อนขึ้นด้านบน"
+                        >
+                          <ArrowUp className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          disabled={idx === sortedSchedules.length - 1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleMoveItem(item.id, 'down', sortedSchedules);
+                          }}
+                          className="p-1.5 text-slate-500 hover:text-blue-700 hover:bg-slate-100 rounded disabled:opacity-30 disabled:hover:bg-transparent cursor-pointer disabled:cursor-not-allowed"
+                          title="เลื่อนลงด้านล่าง"
+                        >
+                          <ArrowDown className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    )}
+
                     <button
                       type="button"
                       onClick={(e) => {

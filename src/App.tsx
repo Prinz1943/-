@@ -63,6 +63,7 @@ import {
   deleteExecutiveFromFirestore,
   saveSettingsToFirestore,
   batchSaveExecutivesToFirestore,
+  batchSaveSchedulesToFirestore,
   batchRestoreDataToFirestore,
 } from './firebase';
 import { collection, onSnapshot, doc } from 'firebase/firestore';
@@ -427,6 +428,24 @@ export default function App() {
     }
     await Promise.all([
       saveScheduleToFirestore(targetItem),
+      saveSettingsToFirestore(updatedSettings),
+    ]);
+  };
+
+  const handleReorderSchedules = async (reorderedItems: ScheduleItem[]) => {
+    const nowIso = new Date().toISOString();
+    const updatedSettings: DocumentSettings = {
+      ...settings,
+      lastSavedTimestamp: nowIso,
+    };
+    setSettings(updatedSettings);
+
+    const reorderedMap = new Map(reorderedItems.map((item) => [item.id, item]));
+    const updatedSchedules = schedules.map((item) => reorderedMap.get(item.id) || item);
+    setSchedules(updatedSchedules);
+
+    await Promise.all([
+      batchSaveSchedulesToFirestore(reorderedItems),
       saveSettingsToFirestore(updatedSettings),
     ]);
   };
@@ -890,6 +909,7 @@ export default function App() {
               onPromptLogin={() => setIsLoginModalOpen(true)}
               onEditSchedule={handleEditSchedule}
               onDeleteSchedule={handleDeleteSchedule}
+              onReorderSchedules={handleReorderSchedules}
               onAddSchedule={handleOpenAddSchedule}
               onEditExecutive={handleOpenEditExecutive}
               onDeleteExecutive={handleDeleteExecutive}
