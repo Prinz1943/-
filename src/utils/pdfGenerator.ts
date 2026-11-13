@@ -196,7 +196,7 @@ export async function exportDocumentToPdf(
             tbl.style.backgroundColor = '#ffffff';
           });
 
-          // Ensure <tr> has NO borders or shadows that could bleed across rowspan cells
+          // Ensure <tr> has NO borders or shadows that could bleed across cells
           clonedEl.querySelectorAll('.official-table tr').forEach((row) => {
             const r = row as HTMLTableRowElement;
             r.style.border = 'none';
@@ -204,6 +204,7 @@ export async function exportDocumentToPdf(
             r.style.borderBottom = 'none';
             r.style.boxShadow = 'none';
             r.style.outline = 'none';
+            r.style.backgroundColor = '#ffffff';
           });
 
           // Explicitly set 1.5px solid black on all th and td
@@ -215,11 +216,56 @@ export async function exportDocumentToPdf(
             c.style.boxShadow = 'none';
           });
 
-          // For cells with rowspan > 1 (e.g. executive name column), explicitly clear internal line artifacts
-          clonedEl.querySelectorAll('.official-table td[rowspan]').forEach((cell) => {
-            const c = cell as HTMLElement;
-            c.style.backgroundColor = '#ffffff';
-            c.style.zIndex = '2';
+          // Fix the html2canvas rowspan horizontal line artifact permanently:
+          // In tables with multiple rows per executive, html2canvas incorrectly draws the subsequent rows'
+          // horizontal borders through the rowspan cell.
+          // In the cloned DOM, we convert each multi-row group so that the executive cell spans row-by-row
+          // with borderBottom: none on upper rows and borderTop: none on lower rows,
+          // OR remove the rowspan and insert matching seamless blank cells into subsequent rows.
+          clonedEl.querySelectorAll('.official-table tbody').forEach((tbody) => {
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            let activeSpans: { remaining: number; width: string; minWidth: string }[] = [];
+
+            for (let rIdx = 0; rIdx < rows.length; rIdx++) {
+              const row = rows[rIdx];
+              const cells = Array.from(row.querySelectorAll('td'));
+
+              // Check if the first cell of this row has a rowspan > 1
+              const firstCell = cells[0];
+              if (firstCell && firstCell.hasAttribute('rowspan')) {
+                const spanCount = parseInt(firstCell.getAttribute('rowspan') || '1', 10);
+                if (spanCount > 1) {
+                  const cellWidth = firstCell.style.width || firstCell.getAttribute('width') || '20.5%';
+                  const cellMinWidth = firstCell.style.minWidth || '125px';
+
+                  // Remove the rowspan on the first cell and remove its bottom border
+                  firstCell.removeAttribute('rowspan');
+                  firstCell.style.borderBottom = 'none';
+                  firstCell.style.backgroundColor = '#ffffff';
+
+                  // For the subsequent rows that this executive spanned, insert a continuation cell
+                  // with no top/bottom borders (except the last one which has borderBottom: 1.5px solid #000000)
+                  for (let nextOffset = 1; nextOffset < spanCount; nextOffset++) {
+                    const nextRow = rows[rIdx + nextOffset];
+                    if (nextRow) {
+                      const isLastOfSpan = nextOffset === spanCount - 1;
+                      const continuationCell = _clonedDoc.createElement('td');
+                      continuationCell.className = firstCell.className;
+                      continuationCell.style.width = cellWidth;
+                      continuationCell.style.minWidth = cellMinWidth;
+                      continuationCell.style.backgroundColor = '#ffffff';
+                      continuationCell.style.border = '1.5px solid #000000';
+                      continuationCell.style.borderTop = 'none';
+                      if (!isLastOfSpan) {
+                        continuationCell.style.borderBottom = 'none';
+                      }
+                      continuationCell.innerHTML = '&nbsp;';
+                      nextRow.insertBefore(continuationCell, nextRow.firstChild);
+                    }
+                  }
+                }
+              }
+            }
           });
         },
       });
